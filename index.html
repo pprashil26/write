@@ -115,7 +115,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
           <div class="hint">Results (search scans all days)</div>
           <div class="hint" id="count"></div>
         </div>
-        <pre id="results">Type / to search.</pre>
+        <pre id="results">Type ctrl + / to search.</pre>
       </div>
     </section>
   </main>
@@ -332,16 +332,23 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     });
 
     // Global shortcuts
-    document.addEventListener("keydown", (e) => {
-      if (e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT")) {
-        if (e.key === "/" && e.target.tagName !== "INPUT") { e.preventDefault(); q.focus(); }
-        return;
-      }
-      if (e.key === "t" || e.key === "T") openDay(ymd(new Date()));
-      if (e.key === "/") { e.preventDefault(); q.focus(); }
-      if (e.altKey && e.key === "ArrowLeft") openDay(addDays(current, -1));
-      if (e.altKey && e.key === "ArrowRight") openDay(addDays(current, 1));
-    });
+  document.addEventListener("keydown", (e) => {
+  const isSearch = (e.ctrlKey || e.metaKey) && e.key === "/";
+
+  if (isSearch) {
+    e.preventDefault();
+    q.focus();
+    return;
+  }
+
+  if (e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT")) {
+    return;
+  }
+
+  if (e.key === "t" || e.key === "T") openDay(ymd(new Date()));
+  if (e.altKey && e.key === "ArrowLeft") openDay(addDays(current, -1));
+  if (e.altKey && e.key === "ArrowRight") openDay(addDays(current, 1));
+});
 
     // Init
     openDay(current);
