@@ -91,11 +91,14 @@
             <div class="hint">
               Rapid log: <b>•</b> task, <b>○</b> event, <b>—</b> note, <b>✓</b> done.
               Save: <b>Ctrl/Cmd+Enter</b> · Search: <b>/</b> · Today: <b>T</b>
+              · Fast symbols: start line with <b>t</b>/<b>n</b>/<b>e</b> then space
             </div>
           </div>
           <div class="hint" id="status">Not saved</div>
         </div>
-        <textarea id="editor" spellcheck="false" placeholder="• Write something…&#10;— Add #tags to auto-index later if you want"></textarea>
+        <textarea id="editor" spellcheck="false" placeholder="t then space → • Task
+n then space → — Note
+e then space → ○ Event"></textarea>
       </div>
 
       <div class="card">
@@ -177,7 +180,6 @@
       for (const day of Object.keys(db).sort()) {
         const text = (db[day] || "");
         if (text.toLowerCase().includes(term)) {
-          // show a tiny snippet
           const lines = text.split("\n").filter(l => l.toLowerCase().includes(term)).slice(0,4);
           hits.push({ day, lines });
         }
@@ -185,7 +187,9 @@
       count.textContent = hits.length ? `${hits.length} day(s)` : "0";
       results.innerHTML = hits.length
         ? hits.map(h => {
-            const safeLines = h.lines.map(l => l.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])));
+            const safeLines = h.lines.map(l =>
+              l.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))
+            );
             return `# ${h.day}\n${safeLines.join("\n")}\n`;
           }).join("\n")
         : "No matches.";
@@ -233,12 +237,71 @@
     $("prev").onclick = () => openDay(addDays(current, -1));
     $("next").onclick = () => openDay(addDays(current, 1));
 
+    // ====== BuJo fast-entry helpers (minimal) ======
+    // Type at the start of a line, then SPACE:
+    //   t␠ -> •  (task),  n␠ -> —  (note),  e␠ -> ○  (event)
+    // Press ENTER on a line starting with •/—/○ to continue that symbol.
+    const BUJO_MAP = { t: "• ", n: "— ", e: "○ " };
+
+    const lineStartIndex = (text, pos) => text.lastIndexOf("\n", pos - 1) + 1;
+
+    const currentLine = (text, pos) => {
+      const start = lineStartIndex(text, pos);
+      const end = text.indexOf("\n", pos);
+      return text.slice(start, end === -1 ? text.length : end);
+    };
+
+    const insertAt = (text, start, end, replacement) =>
+      text.slice(0, start) + replacement + text.slice(end);
+
     // Events
     q.addEventListener("input", renderSearch);
     editor.addEventListener("input", () => setStatus("Not saved"));
+
     editor.addEventListener("keydown", (e) => {
+      const value = editor.value;
+      const start = editor.selectionStart;
+      const end = editor.selectionEnd;
+
+      // Save: Ctrl/Cmd + Enter
       const isSave = (e.ctrlKey || e.metaKey) && e.key === "Enter";
-      if (isSave) { e.preventDefault(); saveDay(); }
+      if (isSave) {
+        e.preventDefault();
+        saveDay();
+        return;
+      }
+
+      // Keep it simple: no special handling for selections
+      if (start !== end) return;
+
+      // Fast symbol expansion on SPACE at start-of-line
+      if (e.key === " ") {
+        const ls = lineStartIndex(value, start);
+        const prefix = value.slice(ls, start); // what's typed on this line so far
+        if (prefix.length === 1 && BUJO_MAP[prefix]) {
+          e.preventDefault();
+          const next = insertAt(value, ls, start, BUJO_MAP[prefix]); // replace "t" with "• "
+          editor.value = next;
+          const caret = ls + BUJO_MAP[prefix].length;
+          editor.setSelectionRange(caret, caret);
+          return;
+        }
+      }
+
+      // Smart Enter: continue the symbol
+      if (e.key === "Enter") {
+        const line = currentLine(value, start);
+        const m = line.match(/^([•—○])\s/);
+        if (m) {
+          e.preventDefault();
+          const sym = m[1];
+          const addition = "\n" + sym + " ";
+          const next = insertAt(value, start, start, addition);
+          editor.value = next;
+          const caret = start + addition.length;
+          editor.setSelectionRange(caret, caret);
+        }
+      }
     });
 
     // Global shortcuts
