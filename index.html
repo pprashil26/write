@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BuJo</title>
+  <style>
+    :root{
+      --bg:#0b0c10; --fg:#e7e7e7; --muted:#9aa0a6; --card:#12141a; --line:#23262f;
+      --accent:#7aa2f7; --danger:#ff6b6b;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    @media (prefers-color-scheme: light){
+      :root{ --bg:#fafafa; --fg:#111; --muted:#666; --card:#fff; --line:#eaeaea; --accent:#2563eb; }
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; background:var(--bg); color:var(--fg);
+      font-family:var(--sans); line-height:1.35;
+    }
+    main{
+      max-width:820px; margin:0 auto; padding:18px 14px 48px;
+    }
+    header{
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      position:sticky; top:0; padding:12px 0; background:linear-gradient(var(--bg) 70%, transparent);
+      backdrop-filter: blur(6px);
+    }
+    .left{ display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; }
+    h1{ font-size:18px; margin:0; font-weight:650; letter-spacing:.2px; }
+    .date{ font-family:var(--mono); color:var(--muted); font-size:12px; }
+    .bar{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+    button, input{
+      border:1px solid var(--line); background:var(--card); color:var(--fg);
+      border-radius:12px; padding:8px 10px; font-size:13px;
+    }
+    button{ cursor:pointer; }
+    button:hover{ border-color:color-mix(in oklab, var(--accent), var(--line) 60%); }
+    button.primary{ border-color:color-mix(in oklab, var(--accent), var(--line) 35%); }
+    button.danger{ border-color:color-mix(in oklab, var(--danger), var(--line) 35%); }
+    input{ min-width:220px; font-family:var(--mono); }
+    .grid{
+      display:grid; grid-template-columns: 1fr; gap:12px; margin-top:12px;
+    }
+    .card{
+      background:var(--card); border:1px solid var(--line); border-radius:18px; padding:12px;
+    }
+    .row{
+      display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .hint{ color:var(--muted); font-size:12px; }
+    textarea{
+      width:100%; min-height:52vh; resize:vertical;
+      font-family:var(--mono); font-size:13px;
+      border:1px solid var(--line); background:transparent; color:var(--fg);
+      border-radius:14px; padding:12px;
+      outline:none;
+    }
+    textarea:focus{ border-color:color-mix(in oklab, var(--accent), var(--line) 30%); }
+    pre{
+      margin:0; white-space:pre-wrap; word-break:break-word;
+      font-family:var(--mono); font-size:12px; color:var(--muted);
+    }
+    a{ color:var(--accent); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="left">
+        <h1>BuJo</h1>
+        <div class="date" id="todayLabel"></div>
+      </div>
+      <div class="bar">
+        <button id="prev" title="Previous day (Alt+Left)">←</button>
+        <button id="next" title="Next day (Alt+Right)">→</button>
+        <button class="primary" id="today" title="Jump to today (T)">Today</button>
+        <input id="q" placeholder="Search…" title="Search entries (/)" />
+        <button id="export" title="Export JSON">Export</button>
+        <button id="import" title="Import JSON">Import</button>
+      </div>
+    </header>
+
+    <section class="grid">
+      <div class="card">
+        <div class="row">
+          <div>
+            <div class="hint">
+              Rapid log: <b>•</b> task, <b>○</b> event, <b>—</b> note, <b>✓</b> done.
+              Save: <b>Ctrl/Cmd+Enter</b> · Search: <b>/</b> · Today: <b>T</b>
+            </div>
+          </div>
+          <div class="hint" id="status">Not saved</div>
+        </div>
+        <textarea id="editor" spellcheck="false" placeholder="• Write something…&#10;— Add #tags to auto-index later if you want"></textarea>
+      </div>
+
+      <div class="card">
+        <div class="row">
+          <div class="hint">Results (search scans all days)</div>
+          <div class="hint" id="count"></div>
+        </div>
+        <pre id="results">Type / to search.</pre>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // ====== Tiny BuJo (single-file) ======
+    const KEY = "bujo.v1"; // change if you want a fresh store
+    const $ = (id) => document.getElementById(id);
+
+    const editor = $("editor");
+    const todayLabel = $("todayLabel");
+    const status = $("status");
+    const q = $("q");
+    const results = $("results");
+    const count = $("count");
+
+    const pad = (n) => String(n).padStart(2, "0");
+    const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    const parseYMD = (s) => {
+      const [y,m,dd] = s.split("-").map(Number);
+      return new Date(y, (m||1)-1, dd||1);
+    };
+    const addDays = (s, delta) => {
+      const d = parseYMD(s);
+      d.setDate(d.getDate() + delta);
+      return ymd(d);
+    };
+
+    const load = () => {
+      try { return JSON.parse(localStorage.getItem(KEY) || "{}"); }
+      catch { return {}; }
+    };
+    const saveAll = (db) => localStorage.setItem(KEY, JSON.stringify(db));
+
+    let db = load();
+    let current = ymd(new Date());
+
+    const setStatus = (msg, ok=false) => {
+      status.textContent = msg;
+      status.style.color = ok ? "var(--muted)" : "color-mix(in oklab, var(--danger), var(--muted) 40%)";
+      if(ok) status.style.color = "var(--muted)";
+    };
+
+    const openDay = (day) => {
+      current = day;
+      todayLabel.textContent = day;
+      editor.value = (db[day] || "");
+      setStatus("Loaded", true);
+      editor.focus();
+      editor.setSelectionRange(editor.value.length, editor.value.length);
+      renderSearch(); // keep results live
+    };
+
+    const saveDay = () => {
+      const text = editor.value.replace(/\r\n/g, "\n").trimEnd();
+      if (text) db[current] = text; else delete db[current];
+      saveAll(db);
+      setStatus("Saved ✓", true);
+      renderSearch();
+    };
+
+    // Search across all days
+    const renderSearch = () => {
+      const term = q.value.trim().toLowerCase();
+      if (!term) {
+        results.textContent = "Type / to search.";
+        count.textContent = "";
+        return;
+      }
+      const hits = [];
+      for (const day of Object.keys(db).sort()) {
+        const text = (db[day] || "");
+        if (text.toLowerCase().includes(term)) {
+          // show a tiny snippet
+          const lines = text.split("\n").filter(l => l.toLowerCase().includes(term)).slice(0,4);
+          hits.push({ day, lines });
+        }
+      }
+      count.textContent = hits.length ? `${hits.length} day(s)` : "0";
+      results.innerHTML = hits.length
+        ? hits.map(h => {
+            const safeLines = h.lines.map(l => l.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])));
+            return `# ${h.day}\n${safeLines.join("\n")}\n`;
+          }).join("\n")
+        : "No matches.";
+    };
+
+    // Export/Import
+    const download = (name, text) => {
+      const blob = new Blob([text], { type:"application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    };
+
+    $("export").onclick = () => download(`bujo-${ymd(new Date())}.json`, JSON.stringify(db, null, 2));
+
+    $("import").onclick = async () => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "application/json";
+      input.onchange = async () => {
+        const file = input.files?.[0];
+        if (!file) return;
+        try{
+          const text = await file.text();
+          const obj = JSON.parse(text);
+          if (obj && typeof obj === "object") {
+            db = obj;
+            saveAll(db);
+            openDay(current);
+            setStatus("Imported ✓", true);
+          } else {
+            setStatus("Invalid file");
+          }
+        } catch {
+          setStatus("Import failed");
+        }
+      };
+      input.click();
+    };
+
+    // Buttons
+    $("today").onclick = () => openDay(ymd(new Date()));
+    $("prev").onclick = () => openDay(addDays(current, -1));
+    $("next").onclick = () => openDay(addDays(current, 1));
+
+    // Events
+    q.addEventListener("input", renderSearch);
+    editor.addEventListener("input", () => setStatus("Not saved"));
+    editor.addEventListener("keydown", (e) => {
+      const isSave = (e.ctrlKey || e.metaKey) && e.key === "Enter";
+      if (isSave) { e.preventDefault(); saveDay(); }
+    });
+
+    // Global shortcuts
+    document.addEventListener("keydown", (e) => {
+      if (e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT")) {
+        // allow / to focus search unless currently typing in input except textarea?
+        if (e.key === "/" && e.target.tagName !== "INPUT") { e.preventDefault(); q.focus(); }
+        return;
+      }
+      if (e.key === "t" || e.key === "T") openDay(ymd(new Date()));
+      if (e.key === "/") { e.preventDefault(); q.focus(); }
+      if (e.altKey && e.key === "ArrowLeft") openDay(addDays(current, -1));
+      if (e.altKey && e.key === "ArrowRight") openDay(addDays(current, 1));
+    });
+
+    // Init
+    openDay(current);
+  </script>
+</body>
+</html>
