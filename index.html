@@ -90,15 +90,24 @@
           <div>
             <div class="hint">
               Rapid log: <b>•</b> task, <b>○</b> event, <b>—</b> note, <b>✓</b> done.
-              Save: <b>Ctrl/Cmd+Enter</b> · Search: <b>/</b> · Today: <b>T</b>
-              · Fast symbols: start line with <b>t</b>/<b>n</b>/<b>e</b> then space
+              Save: <b>Ctrl/Cmd+Enter</b> · Search: <b>/</b> · Today: <b>T</b><br/>
+              Margin format: <b>[signifier][space][bullet]</b> always.
+              Fast entry (start of line + space): <b>n/t/e</b> → <b>␠ —</b>/<b>␠ •</b>/<b>␠ ○</b>.
+              With signifier: <b>!n</b>, <b>*n</b>, <b>?n</b>, <b>@t</b> then space.
             </div>
           </div>
           <div class="hint" id="status">Not saved</div>
         </div>
-        <textarea id="editor" spellcheck="false" placeholder="t then space → • Task
-n then space → — Note
-e then space → ○ Event"></textarea>
+
+        <textarea id="editor" spellcheck="false"
+          placeholder="Examples:
+n␠  →   — Note…
+t␠  →   • Task…
+e␠  →   ○ Event…
+
+!n␠ → ! — Important note…
+@t␠ → @ • Waiting task…
+End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
       </div>
 
       <div class="card">
@@ -157,7 +166,7 @@ e then space → ○ Event"></textarea>
       setStatus("Loaded", true);
       editor.focus();
       editor.setSelectionRange(editor.value.length, editor.value.length);
-      renderSearch(); // keep results live
+      renderSearch();
     };
 
     const saveDay = () => {
@@ -237,11 +246,14 @@ e then space → ○ Event"></textarea>
     $("prev").onclick = () => openDay(addDays(current, -1));
     $("next").onclick = () => openDay(addDays(current, 1));
 
-    // ====== BuJo fast-entry helpers (minimal) ======
-    // Type at the start of a line, then SPACE:
-    //   t␠ -> •  (task),  n␠ -> —  (note),  e␠ -> ○  (event)
-    // Press ENTER on a line starting with •/—/○ to continue that symbol.
-    const BUJO_MAP = { t: "• ", n: "— ", e: "○ " };
+    // ====== BuJo fast-entry helpers (margin + signifier slot) ======
+    // Format always: [signifier-or-space][space][bullet][space]
+    // Start-of-line + SPACE shortcuts:
+    //   n␠ -> "  — "   t␠ -> "  • "   e␠ -> "  ○ "
+    //   !n␠ -> "! — "  *n␠ -> "* — "  ?n␠ -> "? — "  @t␠ -> "@ • "  etc.
+    // ENTER continues same prefix (signifier + bullet).
+    const BULLET = { n: "—", t: "•", e: "○" };
+    const SIGS = new Set(["!", "*", "?", "@"]);
 
     const lineStartIndex = (text, pos) => text.lastIndexOf("\n", pos - 1) + 1;
 
@@ -274,28 +286,43 @@ e then space → ○ Event"></textarea>
       // Keep it simple: no special handling for selections
       if (start !== end) return;
 
-      // Fast symbol expansion on SPACE at start-of-line
+      // Fast expansion on SPACE at start-of-line
       if (e.key === " ") {
         const ls = lineStartIndex(value, start);
         const prefix = value.slice(ls, start); // what's typed on this line so far
-        if (prefix.length === 1 && BUJO_MAP[prefix]) {
+
+        // Accept either: "n" / "t" / "e" OR "!n" / "*t" / "?e" / "@t"
+        let sign = " ";
+        let key = null;
+
+        if (prefix.length === 1 && BULLET[prefix]) {
+          key = prefix;
+        } else if (prefix.length === 2 && SIGS.has(prefix[0]) && BULLET[prefix[1]]) {
+          sign = prefix[0];
+          key = prefix[1];
+        }
+
+        if (key) {
           e.preventDefault();
-          const next = insertAt(value, ls, start, BUJO_MAP[prefix]); // replace "t" with "• "
+          const replacement = `${sign} ${BULLET[key]} `;
+          const next = insertAt(value, ls, start, replacement);
           editor.value = next;
-          const caret = ls + BUJO_MAP[prefix].length;
+          const caret = ls + replacement.length;
           editor.setSelectionRange(caret, caret);
           return;
         }
       }
 
-      // Smart Enter: continue the symbol
+      // Smart Enter: continue same prefix (signifier + bullet)
       if (e.key === "Enter") {
         const line = currentLine(value, start);
-        const m = line.match(/^([•—○])\s/);
+        // Match: [sign/space] [bullet] ...
+        const m = line.match(/^(.?) ([•—○])\s/);
         if (m) {
+          const sign = m[1] || " ";
+          const bullet = m[2];
           e.preventDefault();
-          const sym = m[1];
-          const addition = "\n" + sym + " ";
+          const addition = "\n" + sign + " " + bullet + " ";
           const next = insertAt(value, start, start, addition);
           editor.value = next;
           const caret = start + addition.length;
@@ -307,7 +334,6 @@ e then space → ○ Event"></textarea>
     // Global shortcuts
     document.addEventListener("keydown", (e) => {
       if (e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT")) {
-        // allow / to focus search unless currently typing in input except textarea?
         if (e.key === "/" && e.target.tagName !== "INPUT") { e.preventDefault(); q.focus(); }
         return;
       }
