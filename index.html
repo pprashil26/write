@@ -78,9 +78,11 @@
         <button id="prev" title="Previous day (Alt+Left)">←</button>
         <button id="next" title="Next day (Alt+Right)">→</button>
         <button class="primary" id="today" title="Jump to today (T)">Today</button>
-        <input id="q" placeholder="Search…" title="Search entries (/)" />
+        <input id="q" placeholder="Search…" title="Search entries (Ctrl/Cmd+/)" />
         <button id="export" title="Export JSON">Export</button>
+        <button id="exportTxt" title="Export TXT">Export TXT</button>
         <button id="import" title="Import JSON">Import</button>
+        <button id="importTxt" title="Import TXT">Import TXT</button>
       </div>
     </header>
 
@@ -90,7 +92,7 @@
           <div>
             <div class="hint">
               Rapid log: <b>•</b> task, <b>○</b> event, <b>—</b> note, <b>✓</b> done.
-              Save: <b>Ctrl/Cmd+Enter</b> · Search: <b>/</b> · Today: <b>T</b><br/>
+              Save: <b>Ctrl/Cmd+Enter</b> · Search: <b>Ctrl/Cmd+/</b> · Today: <b>T</b><br/>
               Margin format: <b>[signifier][space][bullet]</b> always.
               Fast entry (start of line + space): <b>n/t/e</b> → <b>␠ —</b>/<b>␠ •</b>/<b>␠ ○</b>.
               With signifier: <b>!n</b>, <b>*n</b>, <b>?n</b>, <b>@t</b> then space.
@@ -115,7 +117,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
           <div class="hint">Results (search scans all days)</div>
           <div class="hint" id="count"></div>
         </div>
-        <pre id="results">Type ctrl + / to search.</pre>
+        <pre id="results">Use Ctrl/Cmd + / to search.</pre>
       </div>
     </section>
   </main>
@@ -181,7 +183,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     const renderSearch = () => {
       const term = q.value.trim().toLowerCase();
       if (!term) {
-        results.textContent = "Type / to search.";
+        results.textContent = "Use Ctrl/Cmd + / to search.";
         count.textContent = "";
         return;
       }
@@ -204,9 +206,9 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
         : "No matches.";
     };
 
-    // Export/Import
-    const download = (name, text) => {
-      const blob = new Blob([text], { type:"application/json" });
+    // -------- Download helper (supports JSON and TXT) --------
+    const download = (name, text, type="text/plain") => {
+      const blob = new Blob([text], { type });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = name;
@@ -214,7 +216,9 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
       URL.revokeObjectURL(a.href);
     };
 
-    $("export").onclick = () => download(`bujo-${ymd(new Date())}.json`, JSON.stringify(db, null, 2));
+    // -------- JSON Export/Import --------
+    $("export").onclick = () =>
+      download(`bujo-${ymd(new Date())}.json`, JSON.stringify(db, null, 2), "application/json");
 
     $("import").onclick = async () => {
       const input = document.createElement("input");
@@ -230,7 +234,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
             db = obj;
             saveAll(db);
             openDay(current);
-            setStatus("Imported ✓", true);
+            setStatus("Imported JSON ✓", true);
           } else {
             setStatus("Invalid file");
           }
@@ -240,6 +244,110 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
       };
       input.click();
     };
+
+    // -------- TXT Export/Import (BUJO_TXT_V1) --------
+    const toBujoTxt = (db) => {
+      const now = new Date().toISOString();
+      const days = Object.keys(db)
+        .filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k))
+        .sort();
+
+      const out = [];
+      out.push("# BUJO_TXT_V1");
+      out.push(`# Exported: ${now}`);
+      out.push("");
+
+      for (const day of days) {
+        out.push(`@@ ${day}`);
+        out.push((db[day] || "").replace(/\r\n/g, "\n").trimEnd());
+        out.push(""); // blank line between days
+      }
+      return out.join("\n");
+    };
+
+    const fromBujoTxt = (text) => {
+      text = (text || "").replace(/\r\n/g, "\n");
+      const lines = text.split("\n");
+
+      // Skip leading comments/blank lines
+      let i = 0;
+      while (i < lines.length && (lines[i].trim() === "" || lines[i].startsWith("#"))) i++;
+
+      const result = {};
+      let currentDay = null;
+      let buf = [];
+
+      const flush = () => {
+        if (currentDay) {
+          // Keep exact content (trim only trailing newlines/spaces at end)
+          result[currentDay] = buf.join("\n").replace(/\s+$/g, "");
+        }
+        buf = [];
+      };
+
+      for (; i < lines.length; i++) {
+        const line = lines[i];
+        const m = line.match(/^@@\s+(\d{4}-\d{2}-\d{2})\s*$/);
+        if (m) {
+          flush();
+          currentDay = m[1];
+          continue;
+        }
+        if (!currentDay) continue; // ignore anything before first @@
+        buf.push(line);
+      }
+      flush();
+      return result;
+    };
+
+    $("exportTxt").onclick = () => {
+      const txt = toBujoTxt(db);
+      download(`bujo-${ymd(new Date())}.txt`, txt, "text/plain");
+    };
+
+$("importTxt").onclick = async () => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".txt,text/plain";
+  input.onchange = async () => {
+    const file = input.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const incoming = fromBujoTxt(text);
+
+      const incomingDays = Object.keys(incoming).filter(d => incoming[d] && incoming[d].trim());
+      const conflicts = incomingDays.filter(day => (db[day] || "").trim().length > 0);
+
+      // Confirmation prompt only if overwrite will occur
+      if (conflicts.length) {
+        const preview = conflicts.slice(0, 10).join(", ");
+        const more = conflicts.length > 10 ? ` … (+${conflicts.length - 10} more)` : "";
+        const ok = confirm(
+          `Import TXT will OVERWRITE ${conflicts.length} existing day(s):\n` +
+          `${preview}${more}\n\nContinue?`
+        );
+        if (!ok) {
+          setStatus("TXT import cancelled", true);
+          return;
+        }
+      }
+
+      // Overwrite strategy: incoming replaces same-day entries
+      for (const day of incomingDays) {
+        db[day] = incoming[day].replace(/\r\n/g, "\n").trimEnd();
+      }
+
+      saveAll(db);
+      openDay(current);
+      setStatus("Imported TXT ✓", true);
+    } catch {
+      setStatus("TXT import failed");
+    }
+  };
+  input.click();
+};
 
     // Buttons
     $("today").onclick = () => openDay(ymd(new Date()));
@@ -289,9 +397,8 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
       // Fast expansion on SPACE at start-of-line
       if (e.key === " ") {
         const ls = lineStartIndex(value, start);
-        const prefix = value.slice(ls, start); // what's typed on this line so far
+        const prefix = value.slice(ls, start);
 
-        // Accept either: "n" / "t" / "e" OR "!n" / "*t" / "?e" / "@t"
         let sign = " ";
         let key = null;
 
@@ -316,7 +423,6 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
       // Smart Enter: continue same prefix (signifier + bullet)
       if (e.key === "Enter") {
         const line = currentLine(value, start);
-        // Match: [sign/space] [bullet] ...
         const m = line.match(/^(.?) ([•—○])\s/);
         if (m) {
           const sign = m[1] || " ";
@@ -331,24 +437,21 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
       }
     });
 
-    // Global shortcuts
-  document.addEventListener("keydown", (e) => {
-  const isSearch = (e.ctrlKey || e.metaKey) && e.key === "/";
+    // Global shortcuts (Ctrl/Cmd + / focuses search)
+    document.addEventListener("keydown", (e) => {
+      const isSearch = (e.ctrlKey || e.metaKey) && e.key === "/";
+      if (isSearch) {
+        e.preventDefault();
+        q.focus();
+        return;
+      }
 
-  if (isSearch) {
-    e.preventDefault();
-    q.focus();
-    return;
-  }
+      if (e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT")) return;
 
-  if (e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT")) {
-    return;
-  }
-
-  if (e.key === "t" || e.key === "T") openDay(ymd(new Date()));
-  if (e.altKey && e.key === "ArrowLeft") openDay(addDays(current, -1));
-  if (e.altKey && e.key === "ArrowRight") openDay(addDays(current, 1));
-});
+      if (e.key === "t" || e.key === "T") openDay(ymd(new Date()));
+      if (e.altKey && e.key === "ArrowLeft") openDay(addDays(current, -1));
+      if (e.altKey && e.key === "ArrowRight") openDay(addDays(current, 1));
+    });
 
     // Init
     openDay(current);
