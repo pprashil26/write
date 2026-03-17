@@ -91,6 +91,43 @@
   padding: 6px 6px;
   min-width: 28px;
 }
+    /* --- Help icon + popover (compact topbar) --- */
+.iconBtn{
+  padding: 6px 8px;
+  min-width: 28px;
+  text-align:center;
+  font-weight: 700;
+  font-family: var(--mono);
+  line-height: 1;
+}
+
+/* Popover positioned under the help button */
+.helpPopover{
+  position: fixed;
+  z-index: 9999;
+  max-width: 360px;
+  width: min(360px, calc(100vw - 24px));
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--fg);
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+.helpTitle{
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--fg);
+}
+
+.helpBody{
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
   </style>
 </head>
 <body>
@@ -105,28 +142,30 @@
         <button id="next" title="Next day (Alt+Right)">→</button>
         <button class="primary" id="today" title="Jump to today (T)">Today</button>
         <input id="q" placeholder="Search…" title="Search entries (Ctrl/Cmd+/)" />
+        <button id="helpBtn" class="iconBtn" title="Help (H)">?</button>
         <button id="export" title="Export JSON">Export</button>
         <button id="exportTxt" title="Export TXT">Export TXT</button>
         <button id="import" title="Import JSON">Import</button>
         <button id="importTxt" title="Import TXT">Import TXT</button>
       </div>
     </header>
+    <div id="helpPopover" class="helpPopover" hidden>
+  <div class="helpTitle">Quick help</div>
+  <div class="helpBody">
+    Rapid log: • task, ○ event, — note, ✓ done.
+    Save: Ctrl/Cmd+Enter · Search: Ctrl/Cmd+/ · Today: T<br><br>
+    Margin format: [signifier][space][bullet] always.
+    Fast entry (start of line + space): n/t/e → ␠ — / ␠ • / ␠ ○.
+    With signifier: !n, *n, ?n, @t then space.
+  </div>
+</div>
 
     <section class="grid">
       <div class="card">
-        <div class="row">
-          <div>
-            <div class="hint">
-              Rapid log: <b>•</b> task, <b>○</b> event, <b>—</b> note, <b>✓</b> done.
-              Save: <b>Ctrl/Cmd+Enter</b> · Search: <b>Ctrl/Cmd+/</b> · Today: <b>T</b><br/>
-              Margin format: <b>[signifier][space][bullet]</b> always.
-              Fast entry (start of line + space): <b>n/t/e</b> → <b>␠ —</b>/<b>␠ •</b>/<b>␠ ○</b>.
-              With signifier: <b>!n</b>, <b>*n</b>, <b>?n</b>, <b>@t</b> then space.
-            </div>
-          </div>
-          <div class="hint" id="status">Not saved</div>
-        </div>
-
+<div class="row">
+  <div class="hint"> </div>
+  <div class="hint" id="status">Not saved</div>
+</div>
         <textarea id="editor" spellcheck="false"
           placeholder="Examples:
 n␠  →   — Note…
@@ -481,6 +520,66 @@ $("importTxt").onclick = async () => {
 
     // Init
     openDay(current);
+    // --- Help popover toggle (top bar) ---
+const helpBtn = document.getElementById("helpBtn");
+const helpPopover = document.getElementById("helpPopover");
+
+const closeHelp = () => {
+  if (!helpPopover) return;
+  helpPopover.hidden = true;
+};
+
+const openHelp = () => {
+  if (!helpPopover || !helpBtn) return;
+
+  // Position popover under the help button
+  const r = helpBtn.getBoundingClientRect();
+  const pad = 8;
+
+  helpPopover.hidden = false;
+
+  // Compute left/top, keep inside viewport
+  const popW = helpPopover.offsetWidth;
+  const left = Math.max(pad, Math.min(r.left, window.innerWidth - popW - pad));
+  const top = Math.min(window.innerHeight - helpPopover.offsetHeight - pad, r.bottom + 8);
+
+  helpPopover.style.left = left + "px";
+  helpPopover.style.top = top + "px";
+};
+
+const toggleHelp = () => {
+  if (helpPopover.hidden) openHelp();
+  else closeHelp();
+};
+
+if (helpBtn && helpPopover) {
+  helpBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleHelp();
+  });
+
+  // Close when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!helpPopover.hidden) closeHelp();
+  });
+
+  // Prevent clicks inside popover from closing it
+  helpPopover.addEventListener("click", (e) => e.stopPropagation());
+
+  // Close on Escape
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeHelp();
+    // Optional: press "H" to toggle help when not typing
+    if ((e.key === "h" || e.key === "H") &&
+        !(e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT"))) {
+      toggleHelp();
+    }
+  });
+
+  // Reposition on resize/scroll
+  window.addEventListener("resize", () => { if (!helpPopover.hidden) openHelp(); });
+  window.addEventListener("scroll", () => { if (!helpPopover.hidden) openHelp(); }, true);
+}
   </script>
 </body>
 </html>
