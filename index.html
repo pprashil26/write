@@ -340,14 +340,19 @@
     .menu svg{ width:18px; height:18px; flex: 0 0 auto; }
 
     @media (max-width: 520px){
-      /* prevent header wrap: ONE ROW */
       .bar{
-        width:100%;
-        flex-wrap: nowrap;
-        justify-content:flex-start;
-        overflow:hidden;
-        gap:6px;
-      }
+  width:100%;
+  flex-wrap: nowrap;
+  justify-content:flex-start;
+  overflow-x: auto;                 /* allow horizontal scroll */
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;/* smooth on iOS */
+  gap:6px;
+}
+
+/* Hide the horizontal scrollbar (still scrollable) */
+.bar::-webkit-scrollbar { height: 0; }
+.bar { scrollbar-width: none; }
       /* hide desktop search + desktop export/import on mobile */
       #q.desktopOnly{ display:none !important; }
       #export.desktopOnly, #exportTxt.desktopOnly, #import.desktopOnly, #importTxt.desktopOnly{ display:none !important; }
