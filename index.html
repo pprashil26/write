@@ -65,6 +65,32 @@
     }
     a{ color:var(--accent); text-decoration:none; }
     a:hover{ text-decoration:underline; }
+    /* --- Compact top bar buttons to fit TXT import/export --- */
+
+/* Reduce spacing between controls */
+.bar {
+  gap: 6px;
+}
+
+/* Smaller buttons */
+.bar button {
+  padding: 6px 8px;      /* was 8px 10px */
+  font-size: 12px;       /* was 13px */
+  border-radius: 10px;  /* slightly tighter */
+}
+
+/* Smaller search box */
+.bar input {
+  min-width: 160px;      /* was 220px */
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+/* Icon-only nav buttons tighter */
+#prev, #next {
+  padding: 6px 6px;
+  min-width: 28px;
+}
   </style>
 </head>
 <body>
