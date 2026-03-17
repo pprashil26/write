@@ -198,10 +198,161 @@
   caret-color: #0000FF; /* cursor also blue */
 }
 
+/* --- App layout with collapsible sidebar --- */
+.app{
+  display:flex;
+  min-height:100vh;
+  align-items:stretch;
+}
+
+/* Sidebar */
+.sidebar{
+  width:280px;
+  max-width:280px;
+  border-right:1px solid var(--line);
+  background: color-mix(in oklab, var(--card), transparent 10%);
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+.content{
+  flex:1 1 auto;
+  min-width:0;
+}
+
+/* Sidebar inner UI */
+.sideTop{
+  padding:12px 10px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.sideTitle{
+  font-weight:800;
+  font-size:12px;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.6px;
+}
+.sideFilter{
+  border:1px solid var(--line);
+  background:transparent;
+  color:var(--fg);
+  border-radius:10px;
+  padding:6px 8px;
+  font-size:12px;
+  font-family:var(--mono);
+  outline:none;
+}
+.sideFilter:focus{
+  border-color:color-mix(in oklab, var(--accent), var(--line) 30%);
+}
+.sideList{
+  padding:10px;
+  overflow:auto;
+}
+
+/* Day groups */
+.dayGroup{
+  margin-bottom:10px;
+}
+.dayHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:6px 8px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:transparent;
+  cursor:pointer;
+  font-family:var(--mono);
+  font-size:12px;
+  color:var(--fg);
+}
+.dayHeader:hover{
+  border-color:color-mix(in oklab, var(--accent), var(--line) 60%);
+}
+.dayHeader .small{
+  color:var(--muted);
+  font-size:11px;
+}
+
+/* Entries under a day */
+.entryItem{
+  margin:6px 2px 0 10px;
+  padding:6px 8px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:transparent;
+  cursor:pointer;
+  font-family:var(--mono);
+  font-size:12px;
+  color:var(--muted);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.entryItem:hover{
+  color:var(--fg);
+  border-color:color-mix(in oklab, var(--accent), var(--line) 60%);
+}
+.entryItem.active{
+  color:var(--fg);
+  border-color:color-mix(in oklab, var(--accent), var(--line) 35%);
+  background: color-mix(in oklab, var(--card), transparent 25%);
+}
+
+/* Collapsed sidebar */
+.app.sidebar-collapsed .sidebar{
+  width:0;
+  max-width:0;
+  border-right:none;
+}
+.app.sidebar-collapsed .sideList,
+.app.sidebar-collapsed .sideTop{
+  display:none;
+}
+
+/* Mobile drawer behavior */
+@media (max-width: 860px){
+  .sidebar{
+    position:fixed;
+    left:0;
+    top:0;
+    z-index:9998;
+    transform: translateX(0);
+    box-shadow: 12px 0 30px rgba(0,0,0,0.35);
+  }
+  .app.sidebar-collapsed .sidebar{
+    transform: translateX(-100%);
+    width:280px;
+    max-width:280px;
+    border-right:1px solid var(--line);
+  }
+}
+
   </style>
 </head>
 
 <body>
+
+<div class="app">
+  <aside id="sidebar" class="sidebar" aria-label="Index">
+    <div class="sideTop">
+      <div class="sideTitle">Index</div>
+      <input id="sideFilter" class="sideFilter" placeholder="Filter…" />
+    </div>
+    <div id="sideList" class="sideList"></div>
+  </aside>
+
+  <div class="content">
+
   <main>
     <header>
       <div class="left">
@@ -210,6 +361,7 @@
       </div>
 
       <div class="bar">
+	  <button id="sideToggle" class="iconBtn" title="Toggle sidebar (Ctrl+B)" aria-expanded="true">☰</button>
         <button id="prev" title="Previous day (Alt+Left)">←</button>
         <button id="next" title="Next day (Alt+Right)">→</button>
         <button class="primary" id="today" title="Jump to today (T)">Today</button>
@@ -274,640 +426,729 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     </section>
   </main>
 
+  </div>
+</div>
+
   <script>
-    // ====== Tiny BuJo (single-file) ======
-    const KEY = "bujo.v2.multi"; // bumped key for multi-entry version
-    const $ = (id) => document.getElementById(id);
+  // ====== Tiny BuJo (single-file) ======
+  const KEY = "bujo.v2.multi"; // multi-entry version
+  const $ = (id) => document.getElementById(id);
 
-    const editor = $("editor");
-    const entryTitle = $("entryTitle");
-    const entryMeta = $("entryMeta");
-    const entryList = $("entryList");
-    const newEntryBtn = $("newEntry");
+  const editor = $("editor");
+  const entryTitle = $("entryTitle");
+  const entryMeta = $("entryMeta");
+  const entryList = $("entryList");
+  const newEntryBtn = $("newEntry");
 
-    const todayLabel = $("todayLabel");
-    const status = $("status");
-    const q = $("q");
-    const results = $("results");
-    const count = $("count");
+  const todayLabel = $("todayLabel");
+  const status = $("status");
+  const q = $("q");
+  const results = $("results");
+  const count = $("count");
 
-    const pad = (n) => String(n).padStart(2, "0");
-    const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    const parseYMD = (s) => {
-      const [y,m,dd] = s.split("-").map(Number);
-      return new Date(y, (m||1)-1, dd||1);
-    };
-    const addDays = (s, delta) => {
-      const d = parseYMD(s);
-      d.setDate(d.getDate() + delta);
-      return ymd(d);
-    };
-    const hhmm = (ts) => {
-      const d = new Date(ts);
-      return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    };
+  // ---- Sidebar elements (your HTML includes these) ----
+  const appEl = document.querySelector(".app");
+  const sideToggle = $("sideToggle");
+  const sideList = $("sideList");
+  const sideFilter = $("sideFilter");
+  const UI_KEY = "bujo.ui.sidebarCollapsed";
 
-    const uid = () => Math.random().toString(36).slice(2, 9) + "-" + Date.now().toString(36);
+  const pad = (n) => String(n).padStart(2, "0");
+  const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const parseYMD = (s) => {
+    const [y, m, dd] = s.split("-").map(Number);
+    return new Date(y, (m || 1) - 1, dd || 1);
+  };
+  const addDays = (s, delta) => {
+    const d = parseYMD(s);
+    d.setDate(d.getDate() + delta);
+    return ymd(d);
+  };
+  const hhmm = (ts) => {
+    const d = new Date(ts);
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
 
-    const load = () => {
-      try { return JSON.parse(localStorage.getItem(KEY) || "{}"); }
-      catch { return {}; }
-    };
-    const saveAll = (db) => localStorage.setItem(KEY, JSON.stringify(db));
+  const uid = () => Math.random().toString(36).slice(2, 9) + "-" + Date.now().toString(36);
 
-    let db = load();
-    let current = ymd(new Date());
-    let currentEntryId = null;
+  const load = () => {
+    try { return JSON.parse(localStorage.getItem(KEY) || "{}"); }
+    catch { return {}; }
+  };
+  const saveAll = (db) => localStorage.setItem(KEY, JSON.stringify(db));
 
-    const setStatus = (msg, ok=false) => {
-      status.textContent = msg;
-      status.style.color = ok ? "var(--muted)" : "color-mix(in oklab, var(--danger), var(--muted) 40%)";
-      if(ok) status.style.color = "var(--muted)";
-    };
+  let db = load();
+  let current = ymd(new Date());
+  let currentEntryId = null;
 
-    // ---- Data normalization / migration ----
-    // Supports:
-    // - legacy string day: "text" -> [{id,ts,title,text}]
-    // - array day: [{...}]
-    const ensureEntriesArray = (day) => {
-      const v = db[day];
-      if (Array.isArray(v)) return v;
+  const setStatus = (msg, ok = false) => {
+    status.textContent = msg;
+    status.style.color = ok
+      ? "var(--muted)"
+      : "color-mix(in oklab, var(--danger), var(--muted) 40%)";
+    if (ok) status.style.color = "var(--muted)";
+  };
 
-      if (typeof v === "string") {
-        const migrated = [{
-          id: uid(),
-          ts: Date.now(),
-          title: "Legacy",
-          text: v.replace(/\r\n/g, "\n").trimEnd()
-        }];
-        db[day] = migrated;
-        saveAll(db);
-        return migrated;
-      }
+  // ---- Data normalization / migration ----
+  // Supports:
+  // - legacy string day: "text" -> [{id,ts,title,text}]
+  // - array day: [{...}]
+  const ensureEntriesArray = (day) => {
+    const v = db[day];
+    if (Array.isArray(v)) return v;
 
-      if (!v) {
-        db[day] = [];
-        return db[day];
-      }
+    if (typeof v === "string") {
+      const migrated = [{
+        id: uid(),
+        ts: Date.now(),
+        title: "Legacy",
+        text: v.replace(/\r\n/g, "\n").trimEnd()
+      }];
+      db[day] = migrated;
+      saveAll(db);
+      return migrated;
+    }
 
-      // unknown shape -> reset safely
+    if (!v) {
       db[day] = [];
       return db[day];
-    };
+    }
 
-    const getEntry = (day, id) => {
-      const arr = ensureEntriesArray(day);
-      return arr.find(e => e.id === id) || null;
-    };
+    // unknown shape -> reset safely
+    db[day] = [];
+    return db[day];
+  };
 
-    const sortEntries = (arr) => arr.slice().sort((a,b) => (a.ts||0) - (b.ts||0));
+  const getEntry = (day, id) => {
+    const arr = ensureEntriesArray(day);
+    return arr.find(e => e.id === id) || null;
+  };
 
-    const renderEntryList = () => {
-      const arr = sortEntries(ensureEntriesArray(current));
-      entryList.innerHTML = "";
+  const sortEntries = (arr) => arr.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
 
-      if (!arr.length) {
-        const empty = document.createElement("span");
-        empty.className = "hint";
-        empty.textContent = "No entries yet. Click + Entry.";
-        entryList.appendChild(empty);
-        entryMeta.textContent = "";
-        return;
-      }
+  // ---- Sidebar helpers ----
+  function setSidebarCollapsed(collapsed) {
+    if (!appEl) return;
+    appEl.classList.toggle("sidebar-collapsed", collapsed);
+    if (sideToggle) sideToggle.setAttribute("aria-expanded", String(!collapsed));
+    localStorage.setItem(UI_KEY, collapsed ? "1" : "0");
+  }
 
-      for (const e of arr) {
-        const btn = document.createElement("button");
-        btn.className = "chip" + (e.id === currentEntryId ? " active" : "");
-        const t = (e.title || "").trim();
-        btn.textContent = `${hhmm(e.ts)}${t ? " " + t : ""}`;
-        btn.title = t ? t : "Untitled";
-        btn.onclick = () => openEntry(e.id);
-        entryList.appendChild(btn);
-      }
+  function toggleSidebar() {
+    if (!appEl) return;
+    setSidebarCollapsed(!appEl.classList.contains("sidebar-collapsed"));
+  }
 
-      const active = getEntry(current, currentEntryId);
-      if (active) {
-        const t = (active.title || "").trim() || "Untitled";
-        entryMeta.textContent = `${hhmm(active.ts)} · ${t}`;
-      }
-    };
+  const getDaysSortedDesc = () =>
+    Object.keys(db)
+      .filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k))
+      .sort((a, b) => (a < b ? 1 : -1)); // newest first
 
-    const openEntry = (entryId) => {
-      const e = getEntry(current, entryId);
-      if (!e) return;
+  function renderSidebarIndex() {
+    if (!sideList) return;
 
-      currentEntryId = e.id;
-      entryTitle.value = e.title || "";
-      editor.value = e.text || "";
-      setStatus("Loaded", true);
+    const term = (sideFilter?.value || "").trim().toLowerCase();
+    const days = getDaysSortedDesc();
 
-      renderEntryList();
+    sideList.innerHTML = "";
 
-      // Focus title if it's empty, else editor
-      if (!(entryTitle.value || "").trim()) {
-        entryTitle.focus();
-        entryTitle.setSelectionRange(entryTitle.value.length, entryTitle.value.length);
-      } else {
-        editor.focus();
-        editor.setSelectionRange(editor.value.length, editor.value.length);
-      }
-    };
+    for (const day of days) {
+      const entries = ensureEntriesArray(day);
+      if (!entries || !entries.length) continue;
 
-    const newEntry = (title = "") => {
-      const arr = ensureEntriesArray(current);
-      const ts = Date.now();
-      const defaultTitle = title || hhmm(ts); // Diarium-like default
-      const entry = { id: uid(), ts, title: defaultTitle, text: "" };
-      arr.push(entry);
-      db[current] = arr;
-      saveAll(db);
-      openEntry(entry.id);
-      renderSearch();
-    };
+      // Filter matches by day/title/text
+      const filtered = entries.filter(e => {
+        if (!term) return true;
+        const title = (e.title || "").toLowerCase();
+        const text = (e.text || "").toLowerCase();
+        return day.includes(term) || title.includes(term) || text.includes(term);
+      });
+      if (!filtered.length) continue;
 
-    const openDay = (day) => {
-      current = day;
-      todayLabel.textContent = day;
+      const group = document.createElement("div");
+      group.className = "dayGroup";
 
-      const arr = sortEntries(ensureEntriesArray(day));
-      if (!arr.length) {
-        // start day with a fresh entry
-        newEntry("");
-        return;
-      }
+      const header = document.createElement("div");
+      header.className = "dayHeader";
+      header.innerHTML = `<span>${day}</span><span class="small">${filtered.length}</span>`;
+      header.onclick = () => openDay(day); // opens latest entry
+      group.appendChild(header);
 
-      // open latest entry by default
-      const latest = arr[arr.length - 1];
-      openEntry(latest.id);
+      const sorted = filtered.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
+      for (const e of sorted) {
+        const item = document.createElement("div");
+        item.className = "entryItem";
 
-      renderSearch();
-    };
+        if (day === current && e.id === currentEntryId) item.classList.add("active");
 
-    const saveEntry = () => {
-      const arr = ensureEntriesArray(current);
-      const e = arr.find(x => x.id === currentEntryId);
+        const title = (e.title || "").trim() || "Untitled";
+        item.textContent = `${hhmm(e.ts)} · ${title}`;
+        item.title = title;
 
-      if (!e) {
-        // if somehow none selected, create one and save into it
-        newEntry("");
-        return;
-      }
+        item.onclick = () => {
+          if (day !== current) openDay(day);
+          // openEntry after openDay to ensure correct current day context
+          setTimeout(() => openEntry(e.id), 0);
 
-      e.title = (entryTitle.value || "").trim() || hhmm(e.ts);
-      e.text = editor.value.replace(/\r\n/g, "\n").trimEnd();
-
-      saveAll(db);
-      setStatus("Saved ✓", true);
-      renderEntryList();
-      renderSearch();
-    };
-
-    // ---- Search across ALL entries ----
-    const escapeHtml = (s) => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-
-    const renderSearch = () => {
-      const term = q.value.trim().toLowerCase();
-      if (!term) {
-        results.textContent = "Use Ctrl/Cmd + / to search.";
-        count.textContent = "";
-        return;
-      }
-
-      const hits = [];
-      const days = Object.keys(db).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
-
-      for (const day of days) {
-        const arr = ensureEntriesArray(day);
-        for (const e of arr) {
-          const title = (e.title || "");
-          const text = (e.text || "");
-          const hay = (title + "\n" + text).toLowerCase();
-          if (!hay.includes(term)) continue;
-
-          const lines = (text || "").split("\n")
-            .filter(l => l.toLowerCase().includes(term))
-            .slice(0, 4);
-
-          hits.push({
-            day,
-            ts: e.ts || 0,
-            title: title,
-            lines
-          });
-        }
-      }
-
-      hits.sort((a,b) => (a.day === b.day ? (a.ts - b.ts) : (a.day < b.day ? -1 : 1)));
-
-      count.textContent = hits.length ? `${hits.length} entry(s)` : "0";
-
-      results.innerHTML = hits.length
-        ? hits.map(h => {
-            const safeLines = h.lines.map(escapeHtml);
-            const t = (h.title || "").trim();
-            const head = `# ${h.day} ${hhmm(h.ts)}${t ? " · " + escapeHtml(t) : ""}`;
-            return `${head}\n${safeLines.join("\n")}\n`;
-          }).join("\n")
-        : "No matches.";
-    };
-
-    // -------- Download helper (supports JSON and TXT) --------
-    const download = (name, text, type="text/plain") => {
-      const blob = new Blob([text], { type });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = name;
-      a.click();
-      URL.revokeObjectURL(a.href);
-    };
-
-    // -------- JSON Export/Import --------
-    $("export").onclick = () =>
-      download(`bujo-${ymd(new Date())}.json`, JSON.stringify(db, null, 2), "application/json");
-
-    $("import").onclick = async () => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "application/json";
-      input.onchange = async () => {
-        const file = input.files?.[0];
-        if (!file) return;
-        try{
-          const text = await file.text();
-          const obj = JSON.parse(text);
-          if (obj && typeof obj === "object") {
-            db = obj;
-            saveAll(db);
-            openDay(current);
-            setStatus("Imported JSON ✓", true);
-          } else {
-            setStatus("Invalid file");
-          }
-        } catch {
-          setStatus("Import failed");
-        }
-      };
-      input.click();
-    };
-
-    // -------- TXT Export/Import --------
-    // V2 supports multiple entries + title.
-    // Format:
-    // # BUJO_TXT_V2
-    // # Exported: ISO
-    // @@ YYYY-MM-DD
-    // @ HH:MM | Title
-    // <entry text...>
-    const toBujoTxtV2 = (db) => {
-      const now = new Date().toISOString();
-      const days = Object.keys(db)
-        .filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k))
-        .sort();
-
-      const out = [];
-      out.push("# BUJO_TXT_V2");
-      out.push(`# Exported: ${now}`);
-      out.push("");
-
-      for (const day of days) {
-        const arr = sortEntries(ensureEntriesArray(day));
-        if (!arr.length) continue;
-
-        out.push(`@@ ${day}`);
-        for (const e of arr) {
-          const title = (e.title || "").replace(/\s+/g, " ").trim();
-          out.push(`@ ${hhmm(e.ts || Date.now())} | ${title}`);
-          out.push((e.text || "").replace(/\r\n/g, "\n").trimEnd());
-          out.push(""); // blank line between entries
-        }
-        out.push(""); // blank line between days
-      }
-
-      return out.join("\n").trimEnd() + "\n";
-    };
-
-    // Import supports both:
-    // - BUJO_TXT_V2 (multi-entry)
-    // - BUJO_TXT_V1 (legacy: one blob per day) -> imported as single entry titled "Imported"
-    const fromBujoTxt = (text) => {
-      text = (text || "").replace(/\r\n/g, "\n");
-      const lines = text.split("\n");
-
-      const isV2 = lines.some(l => l.trim() === "# BUJO_TXT_V2");
-
-      if (!isV2) {
-        // V1 parser: @@ day then rest until next @@
-        let i = 0;
-        while (i < lines.length && (lines[i].trim() === "" || lines[i].startsWith("#"))) i++;
-
-        const result = {};
-        let currentDay = null;
-        let buf = [];
-
-        const flush = () => {
-          if (currentDay) {
-            const body = buf.join("\n").replace(/\s+$/g, "");
-            result[currentDay] = [{
-              id: uid(),
-              ts: Date.now(),
-              title: "Imported",
-              text: body
-            }];
-          }
-          buf = [];
+          // Auto-close on mobile
+          if (window.matchMedia("(max-width: 860px)").matches) setSidebarCollapsed(true);
         };
 
-        for (; i < lines.length; i++) {
-          const line = lines[i];
-          const m = line.match(/^@@\s+(\d{4}-\d{2}-\d{2})\s*$/);
-          if (m) {
-            flush();
-            currentDay = m[1];
-            continue;
-          }
-          if (!currentDay) continue;
-          buf.push(line);
-        }
-        flush();
-        return result;
+        group.appendChild(item);
       }
 
-      // V2 parser
+      sideList.appendChild(group);
+    }
+  }
+
+  // ---- Entry list (chips above editor) ----
+  const renderEntryList = () => {
+    const arr = sortEntries(ensureEntriesArray(current));
+    entryList.innerHTML = "";
+
+    if (!arr.length) {
+      const empty = document.createElement("span");
+      empty.className = "hint";
+      empty.textContent = "No entries yet. Click + Entry.";
+      entryList.appendChild(empty);
+      entryMeta.textContent = "";
+      return;
+    }
+
+    for (const e of arr) {
+      const btn = document.createElement("button");
+      btn.className = "chip" + (e.id === currentEntryId ? " active" : "");
+      const t = (e.title || "").trim();
+      btn.textContent = `${hhmm(e.ts)}${t ? " " + t : ""}`;
+      btn.title = t ? t : "Untitled";
+      btn.onclick = () => openEntry(e.id);
+      entryList.appendChild(btn);
+    }
+
+    const active = getEntry(current, currentEntryId);
+    if (active) {
+      const t = (active.title || "").trim() || "Untitled";
+      entryMeta.textContent = `${hhmm(active.ts)} · ${t}`;
+    }
+  };
+
+  const openEntry = (entryId) => {
+    const e = getEntry(current, entryId);
+    if (!e) return;
+
+    currentEntryId = e.id;
+    entryTitle.value = e.title || "";
+    editor.value = e.text || "";
+    setStatus("Loaded", true);
+
+    renderEntryList();
+    renderSidebarIndex(); // keep sidebar highlight in sync
+
+    // Focus title if empty; else editor
+    if (!(entryTitle.value || "").trim()) {
+      entryTitle.focus();
+      entryTitle.setSelectionRange(entryTitle.value.length, entryTitle.value.length);
+    } else {
+      editor.focus();
+      editor.setSelectionRange(editor.value.length, editor.value.length);
+    }
+  };
+
+  const newEntry = (title = "") => {
+    const arr = ensureEntriesArray(current);
+    const ts = Date.now();
+    const defaultTitle = title || hhmm(ts); // Diarium-like default
+    const entry = { id: uid(), ts, title: defaultTitle, text: "" };
+    arr.push(entry);
+    db[current] = arr;
+    saveAll(db);
+
+    openEntry(entry.id);
+    renderSearch();
+    renderSidebarIndex();
+  };
+
+  const openDay = (day) => {
+    current = day;
+    todayLabel.textContent = day;
+
+    const arr = sortEntries(ensureEntriesArray(day));
+    if (!arr.length) {
+      newEntry("");
+      return;
+    }
+
+    // Open latest entry by default
+    const latest = arr[arr.length - 1];
+    openEntry(latest.id);
+
+    renderSearch();
+    // openEntry already calls renderSidebarIndex()
+  };
+
+  const saveEntry = () => {
+    const arr = ensureEntriesArray(current);
+    const e = arr.find(x => x.id === currentEntryId);
+
+    if (!e) {
+      newEntry("");
+      return;
+    }
+
+    e.title = (entryTitle.value || "").trim() || hhmm(e.ts);
+    e.text = editor.value.replace(/\r\n/g, "\n").trimEnd();
+
+    saveAll(db);
+    setStatus("Saved ✓", true);
+
+    renderEntryList();
+    renderSearch();
+    renderSidebarIndex();
+  };
+
+  // ---- Search across ALL entries ----
+  // FIX: use real characters, not HTML entity sequences
+  const escapeHtml = (s) => (s || "").replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+  const renderSearch = () => {
+    const term = q.value.trim().toLowerCase();
+    if (!term) {
+      results.textContent = "Use Ctrl/Cmd + / to search.";
+      count.textContent = "";
+      return;
+    }
+
+    const hits = [];
+    const days = Object.keys(db).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+
+    for (const day of days) {
+      const arr = ensureEntriesArray(day);
+      for (const e of arr) {
+        const title = (e.title || "");
+        const text = (e.text || "");
+        const hay = (title + "\n" + text).toLowerCase();
+        if (!hay.includes(term)) continue;
+
+        const lines = (text || "").split("\n")
+          .filter(l => l.toLowerCase().includes(term))
+          .slice(0, 4);
+
+        hits.push({ day, ts: e.ts || 0, title, lines });
+      }
+    }
+
+    hits.sort((a, b) => (a.day === b.day ? (a.ts - b.ts) : (a.day < b.day ? -1 : 1)));
+    count.textContent = hits.length ? `${hits.length} entry(s)` : "0";
+
+    results.innerHTML = hits.length
+      ? hits.map(h => {
+          const safeLines = h.lines.map(escapeHtml);
+          const t = (h.title || "").trim();
+          const head = `# ${h.day} ${hhmm(h.ts)}${t ? " · " + escapeHtml(t) : ""}`;
+          return `${head}\n${safeLines.join("\n")}\n`;
+        }).join("\n")
+      : "No matches.";
+  };
+
+  // -------- Download helper (supports JSON and TXT) --------
+  const download = (name, text, type = "text/plain") => {
+    const blob = new Blob([text], { type });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  // -------- JSON Export/Import --------
+  $("export").onclick = () =>
+    download(`bujo-${ymd(new Date())}.json`, JSON.stringify(db, null, 2), "application/json");
+
+  $("import").onclick = async () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const obj = JSON.parse(text);
+        if (obj && typeof obj === "object") {
+          db = obj;
+          saveAll(db);
+          openDay(current);
+          setStatus("Imported JSON ✓", true);
+          renderSidebarIndex();
+        } else {
+          setStatus("Invalid file");
+        }
+      } catch {
+        setStatus("Import failed");
+      }
+    };
+    input.click();
+  };
+
+  // -------- TXT Export/Import --------
+  const toBujoTxtV2 = (db) => {
+    const now = new Date().toISOString();
+    const days = Object.keys(db)
+      .filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k))
+      .sort();
+
+    const out = [];
+    out.push("# BUJO_TXT_V2");
+    out.push(`# Exported: ${now}`);
+    out.push("");
+
+    for (const day of days) {
+      const arr = sortEntries(ensureEntriesArray(day));
+      if (!arr.length) continue;
+
+      out.push(`@@ ${day}`);
+      for (const e of arr) {
+        const title = (e.title || "").replace(/\s+/g, " ").trim();
+        out.push(`@ ${hhmm(e.ts || Date.now())} | ${title}`);
+        out.push((e.text || "").replace(/\r\n/g, "\n").trimEnd());
+        out.push("");
+      }
+      out.push("");
+    }
+
+    return out.join("\n").trimEnd() + "\n";
+  };
+
+  const fromBujoTxt = (text) => {
+    text = (text || "").replace(/\r\n/g, "\n");
+    const lines = text.split("\n");
+
+    const isV2 = lines.some(l => l.trim() === "# BUJO_TXT_V2");
+
+    if (!isV2) {
+      // V1 parser: @@ day then rest until next @@
       let i = 0;
       while (i < lines.length && (lines[i].trim() === "" || lines[i].startsWith("#"))) i++;
 
       const result = {};
-      let day = null;
-      let entry = null;
+      let currentDay = null;
       let buf = [];
 
-      const flushEntry = () => {
-        if (day && entry) {
-          entry.text = buf.join("\n").replace(/\s+$/g, "");
-          if (!result[day]) result[day] = [];
-          result[day].push(entry);
+      const flush = () => {
+        if (currentDay) {
+          const body = buf.join("\n").replace(/\s+$/g, "");
+          result[currentDay] = [{
+            id: uid(),
+            ts: Date.now(),
+            title: "Imported",
+            text: body
+          }];
         }
-        entry = null;
         buf = [];
       };
 
       for (; i < lines.length; i++) {
         const line = lines[i];
-
-        const mDay = line.match(/^@@\s+(\d{4}-\d{2}-\d{2})\s*$/);
-        if (mDay) {
-          flushEntry();
-          day = mDay[1];
+        const m = line.match(/^@@\s+(\d{4}-\d{2}-\d{2})\s*$/);
+        if (m) {
+          flush();
+          currentDay = m[1];
           continue;
         }
-
-        const mEntry = line.match(/^@\s+(\d{2}:\d{2})\s*\|\s*(.*)$/);
-        if (mEntry) {
-          flushEntry();
-          const [hh, mm] = mEntry[1].split(":").map(Number);
-          const base = parseYMD(day || ymd(new Date()));
-          base.setHours(hh || 0, mm || 0, 0, 0);
-
-          entry = {
-            id: uid(),
-            ts: base.getTime(),
-            title: (mEntry[2] || "").trim(),
-            text: ""
-          };
-          continue;
-        }
-
-        // Ignore lines until a day + entry is set
-        if (!day || !entry) continue;
+        if (!currentDay) continue;
         buf.push(line);
       }
-      flushEntry();
-
-      // Sort per day after import
-      for (const d of Object.keys(result)) {
-        result[d] = sortEntries(result[d]);
-      }
-
+      flush();
       return result;
+    }
+
+    // V2 parser
+    let i = 0;
+    while (i < lines.length && (lines[i].trim() === "" || lines[i].startsWith("#"))) i++;
+
+    const result = {};
+    let day = null;
+    let entry = null;
+    let buf = [];
+
+    const flushEntry = () => {
+      if (day && entry) {
+        entry.text = buf.join("\n").replace(/\s+$/g, "");
+        if (!result[day]) result[day] = [];
+        result[day].push(entry);
+      }
+      entry = null;
+      buf = [];
     };
 
-    $("exportTxt").onclick = () => {
-      const txt = toBujoTxtV2(db);
-      download(`bujo-${ymd(new Date())}.txt`, txt, "text/plain");
-    };
+    for (; i < lines.length; i++) {
+      const line = lines[i];
 
-    $("importTxt").onclick = async () => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = ".txt,text/plain";
-      input.onchange = async () => {
-        const file = input.files?.[0];
-        if (!file) return;
+      const mDay = line.match(/^@@\s+(\d{4}-\d{2}-\d{2})\s*$/);
+      if (mDay) {
+        flushEntry();
+        day = mDay[1];
+        continue;
+      }
 
-        try {
-          const text = await file.text();
-          const incomingByDay = fromBujoTxt(text);
+      const mEntry = line.match(/^@\s+(\d{2}:\d{2})\s*\|\s*(.*)$/);
+      if (mEntry) {
+        flushEntry();
+        const [hh, mm] = mEntry[1].split(":").map(Number);
+        const base = parseYMD(day || ymd(new Date()));
+        base.setHours(hh || 0, mm || 0, 0, 0);
 
-          const incomingDays = Object.keys(incomingByDay)
-            .filter(d => Array.isArray(incomingByDay[d]) && incomingByDay[d].some(e => (e.text||"").trim() || (e.title||"").trim()));
+        entry = {
+          id: uid(),
+          ts: base.getTime(),
+          title: (mEntry[2] || "").trim(),
+          text: ""
+        };
+        continue;
+      }
 
-          const conflicts = incomingDays.filter(day => {
-            const existing = ensureEntriesArray(day);
-            return existing && existing.length > 0 && existing.some(e => (e.text||"").trim() || (e.title||"").trim());
-          });
+      if (!day || !entry) continue;
+      buf.push(line);
+    }
+    flushEntry();
 
-          if (conflicts.length) {
-            const preview = conflicts.slice(0, 10).join(", ");
-            const more = conflicts.length > 10 ? ` … (+${conflicts.length - 10} more)` : "";
-            const ok = confirm(
-              `Import TXT will OVERWRITE ${conflicts.length} existing day(s):\n` +
-              `${preview}${more}\n\nContinue?`
-            );
-            if (!ok) {
-              setStatus("TXT import cancelled", true);
-              return;
-            }
+    for (const d of Object.keys(result)) {
+      result[d] = sortEntries(result[d]);
+    }
+    return result;
+  };
+
+  $("exportTxt").onclick = () => {
+    const txt = toBujoTxtV2(db);
+    download(`bujo-${ymd(new Date())}.txt`, txt, "text/plain");
+  };
+
+  $("importTxt").onclick = async () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".txt,text/plain";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const incomingByDay = fromBujoTxt(text);
+
+        const incomingDays = Object.keys(incomingByDay)
+          .filter(d => Array.isArray(incomingByDay[d]) && incomingByDay[d].some(e => (e.text || "").trim() || (e.title || "").trim()));
+
+        const conflicts = incomingDays.filter(day => {
+          const existing = ensureEntriesArray(day);
+          return existing && existing.length > 0 && existing.some(e => (e.text || "").trim() || (e.title || "").trim());
+        });
+
+        if (conflicts.length) {
+          const preview = conflicts.slice(0, 10).join(", ");
+          const more = conflicts.length > 10 ? ` … (+${conflicts.length - 10} more)` : "";
+          const ok = confirm(
+            `Import TXT will OVERWRITE ${conflicts.length} existing day(s):\n` +
+            `${preview}${more}\n\nContinue?`
+          );
+          if (!ok) {
+            setStatus("TXT import cancelled", true);
+            return;
           }
-
-          // Overwrite per day
-          for (const day of incomingDays) {
-            db[day] = sortEntries(incomingByDay[day]).map(e => ({
-              id: e.id || uid(),
-              ts: typeof e.ts === "number" ? e.ts : Date.now(),
-              title: (e.title || "").trim(),
-              text: (e.text || "").replace(/\r\n/g, "\n").trimEnd()
-            }));
-          }
-
-          saveAll(db);
-          openDay(current);
-          setStatus("Imported TXT ✓", true);
-        } catch {
-          setStatus("TXT import failed");
         }
-      };
-      input.click();
+
+        for (const day of incomingDays) {
+          db[day] = sortEntries(incomingByDay[day]).map(e => ({
+            id: e.id || uid(),
+            ts: typeof e.ts === "number" ? e.ts : Date.now(),
+            title: (e.title || "").trim(),
+            text: (e.text || "").replace(/\r\n/g, "\n").trimEnd()
+          }));
+        }
+
+        saveAll(db);
+        openDay(current);
+        setStatus("Imported TXT ✓", true);
+        renderSidebarIndex();
+      } catch {
+        setStatus("TXT import failed");
+      }
     };
+    input.click();
+  };
 
-    // ---- UI hooks ----
-    q.addEventListener("input", renderSearch);
-    editor.addEventListener("input", () => setStatus("Not saved"));
-    entryTitle.addEventListener("input", () => setStatus("Not saved"));
+  // ---- UI hooks ----
+  q.addEventListener("input", renderSearch);
+  editor.addEventListener("input", () => setStatus("Not saved"));
+  entryTitle.addEventListener("input", () => setStatus("Not saved"));
 
-    newEntryBtn.onclick = () => newEntry("");
+  newEntryBtn.onclick = () => newEntry("");
 
-    // Save: Ctrl/Cmd + Enter (on editor/title)
-    const maybeSave = (e) => {
-      const isSave = (e.ctrlKey || e.metaKey) && e.key === "Enter";
-      if (isSave) {
+  // Save: Ctrl/Cmd + Enter (on editor/title)
+  const maybeSave = (e) => {
+    const isSave = (e.ctrlKey || e.metaKey) && e.key === "Enter";
+    if (isSave) {
+      e.preventDefault();
+      saveEntry();
+      return true;
+    }
+    return false;
+  };
+
+  editor.addEventListener("keydown", (e) => {
+    if (maybeSave(e)) return;
+    bujoFastEntry(e);
+  });
+
+  entryTitle.addEventListener("keydown", (e) => {
+    if (maybeSave(e)) return;
+  });
+
+  // Buttons (day nav)
+  $("today").onclick = () => openDay(ymd(new Date()));
+  $("prev").onclick = () => openDay(addDays(current, -1));
+  $("next").onclick = () => openDay(addDays(current, 1));
+
+  // ---- BuJo fast-entry helpers (margin + signifier slot) ----
+  const BULLET = { n: "—", t: "•", e: "○" };
+  const SIGS = new Set(["!", "*", "?", "@"]);
+
+  const lineStartIndex = (text, pos) => text.lastIndexOf("\n", pos - 1) + 1;
+
+  const currentLine = (text, pos) => {
+    const start = lineStartIndex(text, pos);
+    const end = text.indexOf("\n", pos);
+    return text.slice(start, end === -1 ? text.length : end);
+  };
+
+  const insertAt = (text, start, end, replacement) =>
+    text.slice(0, start) + replacement + text.slice(end);
+
+  function bujoFastEntry(e) {
+    const value = editor.value;
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+
+    if (start !== end) return;
+
+    if (e.key === " ") {
+      const ls = lineStartIndex(value, start);
+      const prefix = value.slice(ls, start);
+
+      let sign = " ";
+      let key = null;
+
+      if (prefix.length === 1 && BULLET[prefix]) {
+        key = prefix;
+      } else if (prefix.length === 2 && SIGS.has(prefix[0]) && BULLET[prefix[1]]) {
+        sign = prefix[0];
+        key = prefix[1];
+      }
+
+      if (key) {
         e.preventDefault();
-        saveEntry();
-        return true;
-      }
-      return false;
-    };
-    editor.addEventListener("keydown", (e) => {
-      if (maybeSave(e)) return;
-      bujoFastEntry(e);
-    });
-    entryTitle.addEventListener("keydown", (e) => {
-      if (maybeSave(e)) return;
-    });
-
-    // Buttons (day nav)
-    $("today").onclick = () => openDay(ymd(new Date()));
-    $("prev").onclick = () => openDay(addDays(current, -1));
-    $("next").onclick = () => openDay(addDays(current, 1));
-
-    // ---- BuJo fast-entry helpers (margin + signifier slot) ----
-    // Format always: [signifier-or-space][space][bullet][space]
-    // Start-of-line + SPACE shortcuts:
-    //   n␠ -> "  — "   t␠ -> "  • "   e␠ -> "  ○ "
-    //   !n␠ -> "! — "  *n␠ -> "* — "  ?n␠ -> "? — "  @t␠ -> "@ • "  etc.
-    // ENTER continues same prefix (signifier + bullet).
-    const BULLET = { n: "—", t: "•", e: "○" };
-    const SIGS = new Set(["!", "*", "?", "@"]);
-
-    const lineStartIndex = (text, pos) => text.lastIndexOf("\n", pos - 1) + 1;
-
-    const currentLine = (text, pos) => {
-      const start = lineStartIndex(text, pos);
-      const end = text.indexOf("\n", pos);
-      return text.slice(start, end === -1 ? text.length : end);
-    };
-
-    const insertAt = (text, start, end, replacement) =>
-      text.slice(0, start) + replacement + text.slice(end);
-
-    function bujoFastEntry(e){
-      const value = editor.value;
-      const start = editor.selectionStart;
-      const end = editor.selectionEnd;
-
-      if (start !== end) return;
-
-      if (e.key === " ") {
-        const ls = lineStartIndex(value, start);
-        const prefix = value.slice(ls, start);
-
-        let sign = " ";
-        let key = null;
-
-        if (prefix.length === 1 && BULLET[prefix]) {
-          key = prefix;
-        } else if (prefix.length === 2 && SIGS.has(prefix[0]) && BULLET[prefix[1]]) {
-          sign = prefix[0];
-          key = prefix[1];
-        }
-
-        if (key) {
-          e.preventDefault();
-          const replacement = `${sign} ${BULLET[key]} `;
-          const next = insertAt(value, ls, start, replacement);
-          editor.value = next;
-          const caret = ls + replacement.length;
-          editor.setSelectionRange(caret, caret);
-          return;
-        }
-      }
-
-      if (e.key === "Enter") {
-        const line = currentLine(value, start);
-        const m = line.match(/^(.?) ([•—○])\s/);
-        if (m) {
-          const sign = m[1] || " ";
-          const bullet = m[2];
-          e.preventDefault();
-          const addition = "\n" + sign + " " + bullet + " ";
-          const next = insertAt(value, start, start, addition);
-          editor.value = next;
-          const caret = start + addition.length;
-          editor.setSelectionRange(caret, caret);
-        }
+        const replacement = `${sign} ${BULLET[key]} `;
+        const next = insertAt(value, ls, start, replacement);
+        editor.value = next;
+        const caret = ls + replacement.length;
+        editor.setSelectionRange(caret, caret);
+        return;
       }
     }
 
-    // ---- Global shortcuts ----
-    document.addEventListener("keydown", (e) => {
-      const isSearch = (e.ctrlKey || e.metaKey) && e.key === "/";
-      if (isSearch) {
+    if (e.key === "Enter") {
+      const line = currentLine(value, start);
+      const m = line.match(/^(.?) ([•—○])\s/);
+      if (m) {
+        const sign = m[1] || " ";
+        const bullet = m[2];
         e.preventDefault();
-        q.focus();
-        return;
+        const addition = "\n" + sign + " " + bullet + " ";
+        const next = insertAt(value, start, start, addition);
+        editor.value = next;
+        const caret = start + addition.length;
+        editor.setSelectionRange(caret, caret);
       }
+    }
+  }
 
-      // Toggle help on H (when not typing)
-      if ((e.key === "h" || e.key === "H") &&
-          !(e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT"))) {
-        toggleHelp();
-        return;
-      }
+  // ---- Sidebar events ----
+  if (sideToggle) sideToggle.addEventListener("click", toggleSidebar);
+  if (sideFilter) sideFilter.addEventListener("input", renderSidebarIndex);
 
-      if (e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT")) return;
+  // restore collapsed state on load
+  if (appEl) setSidebarCollapsed(localStorage.getItem(UI_KEY) === "1");
 
-      if (e.key === "t" || e.key === "T") openDay(ymd(new Date()));
-      if (e.altKey && e.key === "ArrowLeft") openDay(addDays(current, -1));
-      if (e.altKey && e.key === "ArrowRight") openDay(addDays(current, 1));
-    });
+  // ---- Global shortcuts ----
+  document.addEventListener("keydown", (e) => {
+    // Ctrl/Cmd + / focuses search
+    const isSearch = (e.ctrlKey || e.metaKey) && e.key === "/";
+    if (isSearch) {
+      e.preventDefault();
+      q.focus();
+      return;
+    }
 
-    // ---- Help popover ----
-    const helpBtn = $("helpBtn");
-    const helpPopover = $("helpPopover");
+    // Ctrl/Cmd + B toggles sidebar
+    const isSide = (e.ctrlKey || e.metaKey) && (e.key === "b" || e.key === "B");
+    if (isSide) {
+      e.preventDefault();
+      toggleSidebar();
+      return;
+    }
 
-    const closeHelp = () => { helpPopover.hidden = true; };
-    const openHelp = () => {
-      const r = helpBtn.getBoundingClientRect();
-      const pad = 8;
-
-      helpPopover.hidden = false;
-
-      const popW = helpPopover.offsetWidth;
-      const popH = helpPopover.offsetHeight;
-
-      const left = Math.max(pad, Math.min(r.left, window.innerWidth - popW - pad));
-      const top = Math.min(window.innerHeight - popH - pad, r.bottom + 8);
-
-      helpPopover.style.left = left + "px";
-      helpPopover.style.top = top + "px";
-    };
-    const toggleHelp = () => {
-      if (helpPopover.hidden) openHelp();
-      else closeHelp();
-    };
-
-    helpBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
+    // Toggle help on H (when not typing)
+    if ((e.key === "h" || e.key === "H") &&
+        !(e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT"))) {
       toggleHelp();
-    });
-    helpPopover.addEventListener("click", (e) => e.stopPropagation());
-    document.addEventListener("click", () => { if (!helpPopover.hidden) closeHelp(); });
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeHelp(); });
-    window.addEventListener("resize", () => { if (!helpPopover.hidden) openHelp(); });
-    window.addEventListener("scroll", () => { if (!helpPopover.hidden) openHelp(); }, true);
+      return;
+    }
 
-    // Init
-    openDay(current);
-    renderEntryList();
-  </script>
+    if (e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT")) return;
+
+    if (e.key === "t" || e.key === "T") openDay(ymd(new Date()));
+    if (e.altKey && e.key === "ArrowLeft") openDay(addDays(current, -1));
+    if (e.altKey && e.key === "ArrowRight") openDay(addDays(current, 1));
+  });
+
+  // ---- Help popover ----
+  const helpBtn = $("helpBtn");
+  const helpPopover = $("helpPopover");
+
+  const closeHelp = () => { helpPopover.hidden = true; };
+  const openHelp = () => {
+    const r = helpBtn.getBoundingClientRect();
+    const pad = 8;
+
+    helpPopover.hidden = false;
+
+    const popW = helpPopover.offsetWidth;
+    const popH = helpPopover.offsetHeight;
+
+    const left = Math.max(pad, Math.min(r.left, window.innerWidth - popW - pad));
+    const top = Math.min(window.innerHeight - popH - pad, r.bottom + 8);
+
+    helpPopover.style.left = left + "px";
+    helpPopover.style.top = top + "px";
+  };
+  const toggleHelp = () => {
+    if (helpPopover.hidden) openHelp();
+    else closeHelp();
+  };
+
+  helpBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleHelp();
+  });
+  helpPopover.addEventListener("click", (e) => e.stopPropagation());
+  document.addEventListener("click", () => { if (!helpPopover.hidden) closeHelp(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeHelp(); });
+  window.addEventListener("resize", () => { if (!helpPopover.hidden) openHelp(); });
+  window.addEventListener("scroll", () => { if (!helpPopover.hidden) openHelp(); }, true);
+
+  // Init
+  openDay(current);
+  renderEntryList();
+  renderSidebarIndex();
+</script>
 </body>
 </html>
