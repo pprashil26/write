@@ -374,6 +374,7 @@
     /* =========================
        Mobile responsiveness + bigger fonts + FAB
        ========================= */
+
     /* Floating +Entry button (mobile) */
     .fab{
       position: fixed;
@@ -388,34 +389,51 @@
       font-size: 14px;
       font-weight: 800;
       box-shadow: 0 12px 24px rgba(0,0,0,0.35);
-      display: none; /* default hidden; enabled on mobile via media query */
+      display: none;
     }
     .fab:active{ transform: translateY(1px); }
-    .app.sidebar-open .fab{ display:none; } /* hide FAB when sidebar is open */
+    .app.sidebar-open .fab{ display:none; }
 
     @media (max-width: 860px){
       .fab{ display: inline-flex; align-items:center; gap:8px; }
-      /* add space so FAB doesn't cover content */
       main{ padding-bottom: 96px; }
     }
 
-    /* Phone-sized tweaks */
+    /* === Toolbar SVG icon-only on MOBILE ONLY (<= 520px) === */
+    .tbtnIcon { display:none; } /* default: hide icons on desktop */
+    .tbtnText { display:inline; } /* default: show text on desktop */
+
+    .tbtnIcon svg{
+      width: 18px;
+      height: 18px;
+      display:block;
+    }
+
     @media (max-width: 520px){
+      /* hide button labels only on mobile */
+      .tbtnText{ display:none; }
+      .tbtnIcon{ display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+
+      /* make export/import buttons super compact on mobile */
+      #export, #exportTxt, #import, #importTxt{
+        padding: 10px 10px;
+        min-width: 44px;
+        text-align: center;
+      }
+
+      /* keep search on full row as before */
       header{ gap:8px; padding:10px 0; }
       .left{ width:100%; justify-content:space-between; align-items:center; }
       h1{ font-size:16px; }
       .date{ font-size:11px; }
-
       .bar{ width:100%; justify-content:flex-start; gap:6px; }
-      /* Search gets a full row */
       #q{ flex: 1 1 100%; min-width: 100%; }
 
-      /* Prevent iOS zoom on focus (>=16px inputs) */
+      /* prevent iOS zoom */
       #q, .titleInput{ font-size:16px; }
 
-      /* Make text entry comfortable */
       textarea{
-        font-size:16px;          /* bigger typing font */
+        font-size:16px;
         line-height:1.45;
         min-height: 54vh;
       }
@@ -424,15 +442,8 @@
       .titleInput{ min-width:100%; }
       .meta{ width:100%; text-align:left; font-size:11px; }
 
-      /* Slightly larger tap targets */
-      .bar button{
-        padding: 10px 10px;
-        border-radius: 12px;
-      }
-      .bar .iconBtn{
-        padding: 10px 10px;
-        min-width: 40px;
-      }
+      .bar button{ padding: 10px 10px; border-radius: 12px; }
+      .bar .iconBtn{ padding: 10px 10px; min-width: 40px; }
     }
   </style>
 </head>
@@ -440,7 +451,6 @@
 <body>
 
 <div class="app">
-  <!-- Backdrop for mobile sidebar -->
   <div id="backdrop" class="backdrop" hidden></div>
 
   <aside id="sidebar" class="sidebar" aria-label="Index">
@@ -468,14 +478,70 @@
           <input id="q" placeholder="Search…" title="Search entries (Ctrl/Cmd+/)" />
           <button id="helpBtn" class="iconBtn" title="Help (H)">?</button>
 
-          <button id="export" title="Export JSON">Export</button>
-          <button id="exportTxt" title="Export TXT">Export TXT</button>
-          <button id="import" title="Import JSON">Import</button>
-          <button id="importTxt" title="Import TXT">Import TXT</button>
+          <!-- Export JSON -->
+          <button id="export" title="Export JSON">
+            <span class="tbtnIcon" aria-hidden="true">
+              <!-- download icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3v10"></path>
+                <path d="M7 10l5 5 5-5"></path>
+                <path d="M5 21h14"></path>
+              </svg>
+            </span>
+            <span class="tbtnText">Export</span>
+          </button>
+
+          <!-- Export TXT -->
+          <button id="exportTxt" title="Export TXT">
+            <span class="tbtnIcon" aria-hidden="true">
+              <!-- file text + download -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"></path>
+                <path d="M14 2v5h5"></path>
+                <path d="M8 13h8"></path>
+                <path d="M8 17h6"></path>
+                <path d="M12 11v6"></path>
+                <path d="M9.5 14.5L12 17l2.5-2.5"></path>
+              </svg>
+            </span>
+            <span class="tbtnText">Export TXT</span>
+          </button>
+
+          <!-- Import JSON -->
+          <button id="import" title="Import JSON">
+            <span class="tbtnIcon" aria-hidden="true">
+              <!-- upload icon -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 21V11"></path>
+                <path d="M7 14l5-5 5 5"></path>
+                <path d="M5 3h14"></path>
+              </svg>
+            </span>
+            <span class="tbtnText">Import</span>
+          </button>
+
+          <!-- Import TXT -->
+          <button id="importTxt" title="Import TXT">
+            <span class="tbtnIcon" aria-hidden="true">
+              <!-- file text + upload -->
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"></path>
+                <path d="M14 2v5h5"></path>
+                <path d="M8 13h8"></path>
+                <path d="M8 17h6"></path>
+                <path d="M12 19V13"></path>
+                <path d="M9.5 15.5L12 13l2.5 2.5"></path>
+              </svg>
+            </span>
+            <span class="tbtnText">Import TXT</span>
+          </button>
         </div>
       </header>
 
-      <!-- Help popover -->
       <div id="helpPopover" class="helpPopover" hidden>
         <div class="helpTitle">Quick help</div>
         <div class="helpBody">Rapid log: • task, ○ event, — note, ✓ done.
@@ -526,12 +592,10 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     </main>
   </div>
 
-  <!-- Floating + Entry button (mobile) -->
   <button id="fabNewEntry" class="fab" title="New entry">＋ Entry</button>
 </div>
 
 <script>
-  // ====== Tiny BuJo (single-file) ======
   const KEY = "bujo.v2.multi";
   const $ = (id) => document.getElementById(id);
 
@@ -623,14 +687,11 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
 
   const sortEntries = (arr) => arr.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
 
-  // ---- Sidebar helpers (mobile drawer + desktop collapse) ----
   function setSidebarCollapsed(collapsed) {
     if (!appEl) return;
 
-    // Desktop collapse
     appEl.classList.toggle("sidebar-collapsed", collapsed);
 
-    // Mobile drawer behavior
     const isMobile = window.matchMedia("(max-width: 860px)").matches;
     if (isMobile) {
       const open = !collapsed;
@@ -700,7 +761,6 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
         item.onclick = () => {
           if (day !== current) openDay(day);
           setTimeout(() => openEntry(e.id), 0);
-
           if (window.matchMedia("(max-width: 860px)").matches) setSidebarCollapsed(true);
         };
 
@@ -711,7 +771,6 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     }
   }
 
-  // ---- Entry chips above editor ----
   const renderEntryList = () => {
     const arr = sortEntries(ensureEntriesArray(current));
     entryList.innerHTML = "";
@@ -812,7 +871,6 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     renderSidebarIndex();
   };
 
-  // ---- Search across ALL entries ----
   const escapeHtml = (s) => (s || "").replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 
   const renderSearch = () => {
@@ -855,7 +913,6 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
       : "No matches.";
   };
 
-  // -------- Download helper (supports JSON and TXT) --------
   const download = (name, text, type = "text/plain") => {
     const blob = new Blob([text], { type });
     const a = document.createElement("a");
@@ -865,7 +922,6 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     URL.revokeObjectURL(a.href);
   };
 
-  // -------- JSON Export/Import --------
   $("export").onclick = () =>
     download(`bujo-${ymd(new Date())}.json`, JSON.stringify(db, null, 2), "application/json");
 
@@ -895,7 +951,6 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     input.click();
   };
 
-  // -------- TXT Export/Import (BUJO_TXT_V2 + V1 fallback) --------
   const toBujoTxtV2 = (db) => {
     const now = new Date().toISOString();
     const days = Object.keys(db)
@@ -931,7 +986,6 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     const isV2 = lines.some(l => l.trim() === "# BUJO_TXT_V2");
 
     if (!isV2) {
-      // V1: @@ day then rest until next @@
       let i = 0;
       while (i < lines.length && (lines[i].trim() === "" || lines[i].startsWith("#"))) i++;
 
@@ -967,7 +1021,6 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
       return result;
     }
 
-    // V2 parser
     let i = 0;
     while (i < lines.length && (lines[i].trim() === "" || lines[i].startsWith("#"))) i++;
 
@@ -1081,17 +1134,13 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     input.click();
   };
 
-  // ---- UI hooks ----
   q.addEventListener("input", renderSearch);
   editor.addEventListener("input", () => setStatus("Not saved"));
   entryTitle.addEventListener("input", () => setStatus("Not saved"));
 
-  // Desktop + Entry button
   newEntryBtn.onclick = () => newEntry("");
-  // Mobile floating + Entry button
   if (fabNewEntryBtn) fabNewEntryBtn.onclick = () => newEntry("");
 
-  // Save: Ctrl/Cmd + Enter (on editor/title)
   const maybeSave = (e) => {
     const isSave = (e.ctrlKey || e.metaKey) && e.key === "Enter";
     if (isSave) {
@@ -1110,12 +1159,10 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     if (maybeSave(e)) return;
   });
 
-  // Day nav
   $("today").onclick = () => openDay(ymd(new Date()));
   $("prev").onclick = () => openDay(addDays(current, -1));
   $("next").onclick = () => openDay(addDays(current, 1));
 
-  // ---- BuJo fast-entry (margin + signifier slot) ----
   const BULLET = { n: "—", t: "•", e: "○" };
   const SIGS = new Set(["!", "*", "?", "@"]);
 
@@ -1175,46 +1222,28 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     }
   }
 
-  // ---- Sidebar events ----
   if (sideToggle) sideToggle.addEventListener("click", toggleSidebar);
   if (sideFilter) sideFilter.addEventListener("input", renderSidebarIndex);
-
-  // Backdrop click closes sidebar (mobile)
   if (backdrop) backdrop.addEventListener("click", () => setSidebarCollapsed(true));
 
-  // Resize: re-apply correct drawer/desktop behavior
   window.addEventListener("resize", () => {
     if (!appEl) return;
     const collapsed = appEl.classList.contains("sidebar-collapsed");
     setSidebarCollapsed(collapsed);
   });
 
-  // Restore sidebar state
   if (appEl) setSidebarCollapsed(localStorage.getItem(UI_KEY) === "1");
 
-  // ---- Global shortcuts ----
   document.addEventListener("keydown", (e) => {
-    // Ctrl/Cmd + / focuses search
     const isSearch = (e.ctrlKey || e.metaKey) && e.key === "/";
-    if (isSearch) {
-      e.preventDefault();
-      q.focus();
-      return;
-    }
+    if (isSearch) { e.preventDefault(); q.focus(); return; }
 
-    // Ctrl/Cmd + B toggles sidebar
     const isSide = (e.ctrlKey || e.metaKey) && (e.key === "b" || e.key === "B");
-    if (isSide) {
-      e.preventDefault();
-      toggleSidebar();
-      return;
-    }
+    if (isSide) { e.preventDefault(); toggleSidebar(); return; }
 
-    // Toggle help on H (when not typing)
     if ((e.key === "h" || e.key === "H") &&
         !(e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT"))) {
-      toggleHelp();
-      return;
+      toggleHelp(); return;
     }
 
     if (e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT")) return;
@@ -1224,7 +1253,6 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     if (e.altKey && e.key === "ArrowRight") openDay(addDays(current, 1));
   });
 
-  // ---- Help popover ----
   const helpBtn = $("helpBtn");
   const helpPopover = $("helpPopover");
 
@@ -1232,27 +1260,17 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
   const openHelp = () => {
     const r = helpBtn.getBoundingClientRect();
     const pad = 8;
-
     helpPopover.hidden = false;
-
     const popW = helpPopover.offsetWidth;
     const popH = helpPopover.offsetHeight;
-
     const left = Math.max(pad, Math.min(r.left, window.innerWidth - popW - pad));
     const top = Math.min(window.innerHeight - popH - pad, r.bottom + 8);
-
     helpPopover.style.left = left + "px";
     helpPopover.style.top = top + "px";
   };
-  const toggleHelp = () => {
-    if (helpPopover.hidden) openHelp();
-    else closeHelp();
-  };
+  const toggleHelp = () => { if (helpPopover.hidden) openHelp(); else closeHelp(); };
 
-  helpBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    toggleHelp();
-  });
+  helpBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleHelp(); });
   helpPopover.addEventListener("click", (e) => e.stopPropagation());
   document.addEventListener("click", () => { if (!helpPopover.hidden) closeHelp(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeHelp(); });
