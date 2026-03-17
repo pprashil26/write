@@ -24,7 +24,8 @@
     }
     header{
       display:flex; gap:10px; align-items:center; justify-content:space-between;
-      position:sticky; top:0; padding:12px 0; background:linear-gradient(var(--bg) 70%, transparent);
+      position:sticky; top:0; padding:12px 0;
+      background:linear-gradient(var(--bg) 70%, transparent);
       backdrop-filter: blur(6px);
       z-index: 10;
     }
@@ -56,11 +57,19 @@
     .hint{ color:var(--muted); font-size:12px; }
 
     textarea{
-      width:100%; min-height:46vh; resize:vertical;
-      font-family:var(--mono); font-size:13px;
-      border:1px solid var(--line); background:transparent; color:var(--fg);
-      border-radius:14px; padding:12px;
+      width:100%;
+      min-height:46vh;
+      resize:vertical;
+      font-family:var(--mono);
+      font-size:13px;
+      line-height:1.35;
+      border:1px solid var(--line);
+      background:transparent;
+      color:var(--fg);
+      border-radius:14px;
+      padding:12px;
       outline:none;
+      -webkit-text-size-adjust: 100%;
     }
     textarea:focus{ border-color:color-mix(in oklab, var(--accent), var(--line) 30%); }
 
@@ -71,7 +80,7 @@
     a{ color:var(--accent); text-decoration:none; }
     a:hover{ text-decoration:underline; }
 
-    /* --- Compact top bar buttons to fit TXT import/export --- */
+    /* --- Compact top bar buttons to fit TXT import/export (desktop-ish) --- */
     .bar { gap: 6px; }
     .bar button {
       padding: 6px 8px;
@@ -139,6 +148,8 @@
       padding-bottom:2px;
       flex: 1 1 auto;
       scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x mandatory;
     }
     .entryList::-webkit-scrollbar{ height:0; }
     .chip{
@@ -151,6 +162,7 @@
       font-family: var(--mono);
       white-space: nowrap;
       cursor:pointer;
+      scroll-snap-align: start;
     }
     .chip:hover{ border-color: color-mix(in oklab, var(--accent), var(--line) 60%); color: var(--fg); }
     .chip.active{
@@ -192,157 +204,245 @@
       color: var(--muted);
       white-space: nowrap;
     }
+
     /* --- Editor text color override --- */
-#editor {
-  color: #0000FF; /* pure blue */
-  caret-color: #0000FF; /* cursor also blue */
-}
+    #editor {
+      color: #0000FF;
+      caret-color: #0000FF;
+    }
 
-/* --- App layout with collapsible sidebar --- */
-.app{
-  display:flex;
-  min-height:100vh;
-  align-items:stretch;
-}
+    /* --- App layout with collapsible sidebar --- */
+    .app{
+      display:flex;
+      min-height:100vh;
+      align-items:stretch;
+    }
 
-/* Sidebar */
-.sidebar{
-  width:280px;
-  max-width:280px;
-  border-right:1px solid var(--line);
-  background: color-mix(in oklab, var(--card), transparent 10%);
-  position:sticky;
-  top:0;
-  height:100vh;
-  overflow:hidden;
-  display:flex;
-  flex-direction:column;
-}
+    /* Backdrop overlay (mobile sidebar) */
+    .backdrop{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 9997;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .15s ease;
+    }
+    .app.sidebar-open .backdrop{
+      opacity: 1;
+      pointer-events: auto;
+    }
 
-.content{
-  flex:1 1 auto;
-  min-width:0;
-}
+    /* Sidebar */
+    .sidebar{
+      width:280px;
+      max-width:280px;
+      border-right:1px solid var(--line);
+      background: color-mix(in oklab, var(--card), transparent 10%);
+      position:sticky;
+      top:0;
+      height:100vh;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
 
-/* Sidebar inner UI */
-.sideTop{
-  padding:12px 10px;
-  border-bottom:1px solid var(--line);
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-}
-.sideTitle{
-  font-weight:800;
-  font-size:12px;
-  color:var(--muted);
-  text-transform:uppercase;
-  letter-spacing:.6px;
-}
-.sideFilter{
-  border:1px solid var(--line);
-  background:transparent;
-  color:var(--fg);
-  border-radius:10px;
-  padding:6px 8px;
-  font-size:12px;
-  font-family:var(--mono);
-  outline:none;
-}
-.sideFilter:focus{
-  border-color:color-mix(in oklab, var(--accent), var(--line) 30%);
-}
-.sideList{
-  padding:10px;
-  overflow:auto;
-}
+    .content{
+      flex:1 1 auto;
+      min-width:0;
+      overflow-x:hidden;
+    }
 
-/* Day groups */
-.dayGroup{
-  margin-bottom:10px;
-}
-.dayHeader{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  padding:6px 8px;
-  border:1px solid var(--line);
-  border-radius:12px;
-  background:transparent;
-  cursor:pointer;
-  font-family:var(--mono);
-  font-size:12px;
-  color:var(--fg);
-}
-.dayHeader:hover{
-  border-color:color-mix(in oklab, var(--accent), var(--line) 60%);
-}
-.dayHeader .small{
-  color:var(--muted);
-  font-size:11px;
-}
+    /* Sidebar inner UI */
+    .sideTop{
+      padding:12px 10px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .sideTitle{
+      font-weight:800;
+      font-size:12px;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.6px;
+    }
+    .sideFilter{
+      border:1px solid var(--line);
+      background:transparent;
+      color:var(--fg);
+      border-radius:10px;
+      padding:6px 8px;
+      font-size:12px;
+      font-family:var(--mono);
+      outline:none;
+    }
+    .sideFilter:focus{
+      border-color:color-mix(in oklab, var(--accent), var(--line) 30%);
+    }
+    .sideList{
+      padding:10px;
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+    }
 
-/* Entries under a day */
-.entryItem{
-  margin:6px 2px 0 10px;
-  padding:6px 8px;
-  border:1px solid var(--line);
-  border-radius:12px;
-  background:transparent;
-  cursor:pointer;
-  font-family:var(--mono);
-  font-size:12px;
-  color:var(--muted);
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-.entryItem:hover{
-  color:var(--fg);
-  border-color:color-mix(in oklab, var(--accent), var(--line) 60%);
-}
-.entryItem.active{
-  color:var(--fg);
-  border-color:color-mix(in oklab, var(--accent), var(--line) 35%);
-  background: color-mix(in oklab, var(--card), transparent 25%);
-}
+    /* Day groups */
+    .dayGroup{
+      margin-bottom:10px;
+    }
+    .dayHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      padding:10px 8px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:transparent;
+      cursor:pointer;
+      font-family:var(--mono);
+      font-size:12px;
+      color:var(--fg);
+    }
+    .dayHeader:hover{
+      border-color:color-mix(in oklab, var(--accent), var(--line) 60%);
+    }
+    .dayHeader .small{
+      color:var(--muted);
+      font-size:11px;
+    }
 
-/* Collapsed sidebar */
-.app.sidebar-collapsed .sidebar{
-  width:0;
-  max-width:0;
-  border-right:none;
-}
-.app.sidebar-collapsed .sideList,
-.app.sidebar-collapsed .sideTop{
-  display:none;
-}
+    /* Entries under a day */
+    .entryItem{
+      margin:6px 2px 0 10px;
+      padding:10px 8px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:transparent;
+      cursor:pointer;
+      font-family:var(--mono);
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .entryItem:hover{
+      color:var(--fg);
+      border-color:color-mix(in oklab, var(--accent), var(--line) 60%);
+    }
+    .entryItem.active{
+      color:var(--fg);
+      border-color:color-mix(in oklab, var(--accent), var(--line) 35%);
+      background: color-mix(in oklab, var(--card), transparent 25%);
+    }
 
-/* Mobile drawer behavior */
-@media (max-width: 860px){
-  .sidebar{
-    position:fixed;
-    left:0;
-    top:0;
-    z-index:9998;
-    transform: translateX(0);
-    box-shadow: 12px 0 30px rgba(0,0,0,0.35);
-  }
-  .app.sidebar-collapsed .sidebar{
-    transform: translateX(-100%);
-    width:280px;
-    max-width:280px;
-    border-right:1px solid var(--line);
-  }
-}
+    /* Collapsed sidebar (desktop) */
+    .app.sidebar-collapsed .sidebar{
+      width:0;
+      max-width:0;
+      border-right:none;
+    }
+    .app.sidebar-collapsed .sideList,
+    .app.sidebar-collapsed .sideTop{
+      display:none;
+    }
 
+    /* Mobile drawer behavior */
+    @media (max-width: 860px){
+      .sidebar{
+        position:fixed;
+        left:0;
+        top:0;
+        z-index:9998;
+        transform: translateX(0);
+        width:280px;
+        max-width:85vw;
+        box-shadow: 12px 0 30px rgba(0,0,0,0.35);
+      }
+      .app.sidebar-collapsed .sidebar{
+        transform: translateX(-100%);
+        border-right:1px solid var(--line);
+      }
+      body.sidebar-lock{
+        overflow:hidden;
+        height:100%;
+      }
+    }
+
+    /* =========================
+       Mobile responsiveness + bigger fonts + FAB
+       ========================= */
+    /* Floating +Entry button (mobile) */
+    .fab{
+      position: fixed;
+      right: calc(16px + env(safe-area-inset-right));
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      z-index: 9996;
+      border: 1px solid color-mix(in oklab, var(--accent), var(--line) 35%);
+      background: color-mix(in oklab, var(--card), transparent 10%);
+      color: var(--fg);
+      border-radius: 999px;
+      padding: 12px 14px;
+      font-size: 14px;
+      font-weight: 800;
+      box-shadow: 0 12px 24px rgba(0,0,0,0.35);
+      display: none; /* default hidden; enabled on mobile via media query */
+    }
+    .fab:active{ transform: translateY(1px); }
+    .app.sidebar-open .fab{ display:none; } /* hide FAB when sidebar is open */
+
+    @media (max-width: 860px){
+      .fab{ display: inline-flex; align-items:center; gap:8px; }
+      /* add space so FAB doesn't cover content */
+      main{ padding-bottom: 96px; }
+    }
+
+    /* Phone-sized tweaks */
+    @media (max-width: 520px){
+      header{ gap:8px; padding:10px 0; }
+      .left{ width:100%; justify-content:space-between; align-items:center; }
+      h1{ font-size:16px; }
+      .date{ font-size:11px; }
+
+      .bar{ width:100%; justify-content:flex-start; gap:6px; }
+      /* Search gets a full row */
+      #q{ flex: 1 1 100%; min-width: 100%; }
+
+      /* Prevent iOS zoom on focus (>=16px inputs) */
+      #q, .titleInput{ font-size:16px; }
+
+      /* Make text entry comfortable */
+      textarea{
+        font-size:16px;          /* bigger typing font */
+        line-height:1.45;
+        min-height: 54vh;
+      }
+
+      .card{ padding:10px; border-radius:16px; }
+      .titleInput{ min-width:100%; }
+      .meta{ width:100%; text-align:left; font-size:11px; }
+
+      /* Slightly larger tap targets */
+      .bar button{
+        padding: 10px 10px;
+        border-radius: 12px;
+      }
+      .bar .iconBtn{
+        padding: 10px 10px;
+        min-width: 40px;
+      }
+    }
   </style>
 </head>
 
 <body>
 
 <div class="app">
+  <!-- Backdrop for mobile sidebar -->
+  <div id="backdrop" class="backdrop" hidden></div>
+
   <aside id="sidebar" class="sidebar" aria-label="Index">
     <div class="sideTop">
       <div class="sideTitle">Index</div>
@@ -352,58 +452,57 @@
   </aside>
 
   <div class="content">
+    <main>
+      <header>
+        <div class="left">
+          <h1>BuJo</h1>
+          <div class="date" id="todayLabel"></div>
+        </div>
 
-  <main>
-    <header>
-      <div class="left">
-        <h1>BuJo</h1>
-        <div class="date" id="todayLabel"></div>
-      </div>
+        <div class="bar">
+          <button id="sideToggle" class="iconBtn" title="Toggle sidebar (Ctrl/Cmd+B)" aria-expanded="true">☰</button>
+          <button id="prev" title="Previous day (Alt+Left)">←</button>
+          <button id="next" title="Next day (Alt+Right)">→</button>
+          <button class="primary" id="today" title="Jump to today (T)">Today</button>
 
-      <div class="bar">
-	  <button id="sideToggle" class="iconBtn" title="Toggle sidebar (Ctrl+B)" aria-expanded="true">☰</button>
-        <button id="prev" title="Previous day (Alt+Left)">←</button>
-        <button id="next" title="Next day (Alt+Right)">→</button>
-        <button class="primary" id="today" title="Jump to today (T)">Today</button>
+          <input id="q" placeholder="Search…" title="Search entries (Ctrl/Cmd+/)" />
+          <button id="helpBtn" class="iconBtn" title="Help (H)">?</button>
 
-        <input id="q" placeholder="Search…" title="Search entries (Ctrl/Cmd+/)" />
-        <button id="helpBtn" class="iconBtn" title="Help (H)">?</button>
+          <button id="export" title="Export JSON">Export</button>
+          <button id="exportTxt" title="Export TXT">Export TXT</button>
+          <button id="import" title="Import JSON">Import</button>
+          <button id="importTxt" title="Import TXT">Import TXT</button>
+        </div>
+      </header>
 
-        <button id="export" title="Export JSON">Export</button>
-        <button id="exportTxt" title="Export TXT">Export TXT</button>
-        <button id="import" title="Import JSON">Import</button>
-        <button id="importTxt" title="Import TXT">Import TXT</button>
-      </div>
-    </header>
-
-    <!-- Help popover -->
-    <div id="helpPopover" class="helpPopover" hidden>
-      <div class="helpTitle">Quick help</div>
-      <div class="helpBody">Rapid log: • task, ○ event, — note, ✓ done.
+      <!-- Help popover -->
+      <div id="helpPopover" class="helpPopover" hidden>
+        <div class="helpTitle">Quick help</div>
+        <div class="helpBody">Rapid log: • task, ○ event, — note, ✓ done.
 Save: Ctrl/Cmd+Enter · Search: Ctrl/Cmd+/ · Today: T
 
 Margin format: [signifier][space][bullet] always.
 Fast entry (start of line + space): n/t/e → ␠ — / ␠ • / ␠ ○.
 With signifier: !n, *n, ?n, @t then space.</div>
-    </div>
+      </div>
 
-    <section class="grid">
-      <div class="card">
-        <div class="row">
-          <div class="entryBar">
-            <button id="newEntry" class="newEntryBtn" title="New entry for this day">+ Entry</button>
-            <div id="entryList" class="entryList" aria-label="Entries list"></div>
+      <section class="grid">
+        <div class="card">
+          <div class="row">
+            <div class="entryBar">
+              <button id="newEntry" class="newEntryBtn" title="New entry for this day">+ Entry</button>
+              <div id="entryList" class="entryList" aria-label="Entries list"></div>
+            </div>
+            <div class="hint" id="status">Not saved</div>
           </div>
-          <div class="hint" id="status">Not saved</div>
-        </div>
 
-        <div class="titleRow">
-          <input id="entryTitle" class="titleInput" placeholder="Entry title…" />
-          <div id="entryMeta" class="meta"></div>
-        </div>
+          <div class="titleRow">
+            <input id="entryTitle" class="titleInput" placeholder="Entry title…" />
+            <div id="entryMeta" class="meta"></div>
+          </div>
 
-        <textarea id="editor" spellcheck="false"
-          placeholder="Type notes here…
+          <textarea id="editor" spellcheck="false"
+            placeholder="Type notes here…
 
 Fast symbols at start of a line:
 n␠ →   — Note…
@@ -414,24 +513,26 @@ With signifier:
 !n␠, *n␠, ?n␠, @t␠ then space
 
 End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
-      </div>
-
-      <div class="card">
-        <div class="row">
-          <div class="hint">Results (search scans all entries)</div>
-          <div class="hint" id="count"></div>
         </div>
-        <pre id="results">Use Ctrl/Cmd + / to search.</pre>
-      </div>
-    </section>
-  </main>
 
+        <div class="card">
+          <div class="row">
+            <div class="hint">Results (search scans all entries)</div>
+            <div class="hint" id="count"></div>
+          </div>
+          <pre id="results">Use Ctrl/Cmd + / to search.</pre>
+        </div>
+      </section>
+    </main>
   </div>
+
+  <!-- Floating + Entry button (mobile) -->
+  <button id="fabNewEntry" class="fab" title="New entry">＋ Entry</button>
 </div>
 
-  <script>
+<script>
   // ====== Tiny BuJo (single-file) ======
-  const KEY = "bujo.v2.multi"; // multi-entry version
+  const KEY = "bujo.v2.multi";
   const $ = (id) => document.getElementById(id);
 
   const editor = $("editor");
@@ -439,6 +540,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
   const entryMeta = $("entryMeta");
   const entryList = $("entryList");
   const newEntryBtn = $("newEntry");
+  const fabNewEntryBtn = $("fabNewEntry");
 
   const todayLabel = $("todayLabel");
   const status = $("status");
@@ -446,11 +548,11 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
   const results = $("results");
   const count = $("count");
 
-  // ---- Sidebar elements (your HTML includes these) ----
   const appEl = document.querySelector(".app");
   const sideToggle = $("sideToggle");
   const sideList = $("sideList");
   const sideFilter = $("sideFilter");
+  const backdrop = $("backdrop");
   const UI_KEY = "bujo.ui.sidebarCollapsed";
 
   const pad = (n) => String(n).padStart(2, "0");
@@ -489,10 +591,6 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     if (ok) status.style.color = "var(--muted)";
   };
 
-  // ---- Data normalization / migration ----
-  // Supports:
-  // - legacy string day: "text" -> [{id,ts,title,text}]
-  // - array day: [{...}]
   const ensureEntriesArray = (day) => {
     const v = db[day];
     if (Array.isArray(v)) return v;
@@ -514,7 +612,6 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
       return db[day];
     }
 
-    // unknown shape -> reset safely
     db[day] = [];
     return db[day];
   };
@@ -526,10 +623,26 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
 
   const sortEntries = (arr) => arr.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
 
-  // ---- Sidebar helpers ----
+  // ---- Sidebar helpers (mobile drawer + desktop collapse) ----
   function setSidebarCollapsed(collapsed) {
     if (!appEl) return;
+
+    // Desktop collapse
     appEl.classList.toggle("sidebar-collapsed", collapsed);
+
+    // Mobile drawer behavior
+    const isMobile = window.matchMedia("(max-width: 860px)").matches;
+    if (isMobile) {
+      const open = !collapsed;
+      appEl.classList.toggle("sidebar-open", open);
+      document.body.classList.toggle("sidebar-lock", open);
+      if (backdrop) backdrop.hidden = !open;
+    } else {
+      appEl.classList.remove("sidebar-open");
+      document.body.classList.remove("sidebar-lock");
+      if (backdrop) backdrop.hidden = true;
+    }
+
     if (sideToggle) sideToggle.setAttribute("aria-expanded", String(!collapsed));
     localStorage.setItem(UI_KEY, collapsed ? "1" : "0");
   }
@@ -542,7 +655,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
   const getDaysSortedDesc = () =>
     Object.keys(db)
       .filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k))
-      .sort((a, b) => (a < b ? 1 : -1)); // newest first
+      .sort((a, b) => (a < b ? 1 : -1));
 
   function renderSidebarIndex() {
     if (!sideList) return;
@@ -556,7 +669,6 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
       const entries = ensureEntriesArray(day);
       if (!entries || !entries.length) continue;
 
-      // Filter matches by day/title/text
       const filtered = entries.filter(e => {
         if (!term) return true;
         const title = (e.title || "").toLowerCase();
@@ -571,7 +683,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
       const header = document.createElement("div");
       header.className = "dayHeader";
       header.innerHTML = `<span>${day}</span><span class="small">${filtered.length}</span>`;
-      header.onclick = () => openDay(day); // opens latest entry
+      header.onclick = () => openDay(day);
       group.appendChild(header);
 
       const sorted = filtered.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
@@ -587,10 +699,8 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
 
         item.onclick = () => {
           if (day !== current) openDay(day);
-          // openEntry after openDay to ensure correct current day context
           setTimeout(() => openEntry(e.id), 0);
 
-          // Auto-close on mobile
           if (window.matchMedia("(max-width: 860px)").matches) setSidebarCollapsed(true);
         };
 
@@ -601,7 +711,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     }
   }
 
-  // ---- Entry list (chips above editor) ----
+  // ---- Entry chips above editor ----
   const renderEntryList = () => {
     const arr = sortEntries(ensureEntriesArray(current));
     entryList.innerHTML = "";
@@ -642,9 +752,8 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     setStatus("Loaded", true);
 
     renderEntryList();
-    renderSidebarIndex(); // keep sidebar highlight in sync
+    renderSidebarIndex();
 
-    // Focus title if empty; else editor
     if (!(entryTitle.value || "").trim()) {
       entryTitle.focus();
       entryTitle.setSelectionRange(entryTitle.value.length, entryTitle.value.length);
@@ -657,7 +766,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
   const newEntry = (title = "") => {
     const arr = ensureEntriesArray(current);
     const ts = Date.now();
-    const defaultTitle = title || hhmm(ts); // Diarium-like default
+    const defaultTitle = title || hhmm(ts);
     const entry = { id: uid(), ts, title: defaultTitle, text: "" };
     arr.push(entry);
     db[current] = arr;
@@ -678,12 +787,9 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
       return;
     }
 
-    // Open latest entry by default
     const latest = arr[arr.length - 1];
     openEntry(latest.id);
-
     renderSearch();
-    // openEntry already calls renderSidebarIndex()
   };
 
   const saveEntry = () => {
@@ -707,7 +813,6 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
   };
 
   // ---- Search across ALL entries ----
-  // FIX: use real characters, not HTML entity sequences
   const escapeHtml = (s) => (s || "").replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 
   const renderSearch = () => {
@@ -790,7 +895,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     input.click();
   };
 
-  // -------- TXT Export/Import --------
+  // -------- TXT Export/Import (BUJO_TXT_V2 + V1 fallback) --------
   const toBujoTxtV2 = (db) => {
     const now = new Date().toISOString();
     const days = Object.keys(db)
@@ -826,7 +931,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     const isV2 = lines.some(l => l.trim() === "# BUJO_TXT_V2");
 
     if (!isV2) {
-      // V1 parser: @@ day then rest until next @@
+      // V1: @@ day then rest until next @@
       let i = 0;
       while (i < lines.length && (lines[i].trim() === "" || lines[i].startsWith("#"))) i++;
 
@@ -981,7 +1086,10 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
   editor.addEventListener("input", () => setStatus("Not saved"));
   entryTitle.addEventListener("input", () => setStatus("Not saved"));
 
+  // Desktop + Entry button
   newEntryBtn.onclick = () => newEntry("");
+  // Mobile floating + Entry button
+  if (fabNewEntryBtn) fabNewEntryBtn.onclick = () => newEntry("");
 
   // Save: Ctrl/Cmd + Enter (on editor/title)
   const maybeSave = (e) => {
@@ -998,28 +1106,25 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     if (maybeSave(e)) return;
     bujoFastEntry(e);
   });
-
   entryTitle.addEventListener("keydown", (e) => {
     if (maybeSave(e)) return;
   });
 
-  // Buttons (day nav)
+  // Day nav
   $("today").onclick = () => openDay(ymd(new Date()));
   $("prev").onclick = () => openDay(addDays(current, -1));
   $("next").onclick = () => openDay(addDays(current, 1));
 
-  // ---- BuJo fast-entry helpers (margin + signifier slot) ----
+  // ---- BuJo fast-entry (margin + signifier slot) ----
   const BULLET = { n: "—", t: "•", e: "○" };
   const SIGS = new Set(["!", "*", "?", "@"]);
 
   const lineStartIndex = (text, pos) => text.lastIndexOf("\n", pos - 1) + 1;
-
   const currentLine = (text, pos) => {
     const start = lineStartIndex(text, pos);
     const end = text.indexOf("\n", pos);
     return text.slice(start, end === -1 ? text.length : end);
   };
-
   const insertAt = (text, start, end, replacement) =>
     text.slice(0, start) + replacement + text.slice(end);
 
@@ -1027,7 +1132,6 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     const value = editor.value;
     const start = editor.selectionStart;
     const end = editor.selectionEnd;
-
     if (start !== end) return;
 
     if (e.key === " ") {
@@ -1075,7 +1179,17 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
   if (sideToggle) sideToggle.addEventListener("click", toggleSidebar);
   if (sideFilter) sideFilter.addEventListener("input", renderSidebarIndex);
 
-  // restore collapsed state on load
+  // Backdrop click closes sidebar (mobile)
+  if (backdrop) backdrop.addEventListener("click", () => setSidebarCollapsed(true));
+
+  // Resize: re-apply correct drawer/desktop behavior
+  window.addEventListener("resize", () => {
+    if (!appEl) return;
+    const collapsed = appEl.classList.contains("sidebar-collapsed");
+    setSidebarCollapsed(collapsed);
+  });
+
+  // Restore sidebar state
   if (appEl) setSidebarCollapsed(localStorage.getItem(UI_KEY) === "1");
 
   // ---- Global shortcuts ----
