@@ -282,8 +282,15 @@
     }
 
     /* ========= Mobile toolbar compression (<=520px) ========= */
-    .mobileOnly{ display:none; }
-    .desktopOnly{ display:inline-flex; }
+    /* Desktop defaults: mobile-only UI hidden */
+.mobileOnly { display: none !important; }
+.desktopOnly { display: inline-flex; }
+
+/* Mobile-only UI visible only on <=520px */
+@media (max-width: 520px){
+  .mobileOnly { display: inline-flex !important; }
+  .desktopOnly { display: none !important; }
+}
 
     /* Search overlay under header (shown on mobile only; toggled by JS) */
     .searchOverlay{
