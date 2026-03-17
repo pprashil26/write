@@ -41,7 +41,6 @@
     button{ cursor:pointer; }
     button:hover{ border-color:color-mix(in oklab, var(--accent), var(--line) 60%); }
     button.primary{ border-color:color-mix(in oklab, var(--accent), var(--line) 35%); }
-    button.danger{ border-color:color-mix(in oklab, var(--danger), var(--line) 35%); }
     input{ min-width:220px; font-family:var(--mono); }
 
     .grid{
@@ -77,25 +76,12 @@
       margin:0; white-space:pre-wrap; word-break:break-word;
       font-family:var(--mono); font-size:12px; color:var(--muted);
     }
-    a{ color:var(--accent); text-decoration:none; }
-    a:hover{ text-decoration:underline; }
 
-    /* --- Compact top bar buttons to fit TXT import/export (desktop-ish) --- */
+    /* --- Compact top bar buttons (desktop-ish) --- */
     .bar { gap: 6px; }
-    .bar button {
-      padding: 6px 8px;
-      font-size: 12px;
-      border-radius: 10px;
-    }
-    .bar input {
-      min-width: 160px;
-      padding: 6px 8px;
-      font-size: 12px;
-    }
-    #prev, #next {
-      padding: 6px 6px;
-      min-width: 28px;
-    }
+    .bar button { padding: 6px 8px; font-size: 12px; border-radius: 10px; }
+    .bar input { min-width: 160px; padding: 6px 8px; font-size: 12px; }
+    #prev, #next { padding: 6px 6px; min-width: 28px; }
 
     /* --- Help icon + popover --- */
     .iconBtn{
@@ -119,35 +105,18 @@
       padding: 10px 12px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.35);
     }
-    .helpTitle{
-      font-size: 12px;
-      font-weight: 800;
-      margin-bottom: 6px;
-      color: var(--fg);
-    }
-    .helpBody{
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.35;
-      white-space: pre-wrap;
-    }
+    .helpTitle{ font-size: 12px; font-weight: 800; margin-bottom: 6px; }
+    .helpBody{ font-size: 12px; color: var(--muted); line-height: 1.35; white-space: pre-wrap; }
 
     /* --- Multi-entry UI --- */
     .entryBar{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      flex: 1 1 auto;
-      min-width: 260px;
+      display:flex; gap:8px; align-items:center;
+      flex: 1 1 auto; min-width: 260px;
     }
     .entryList{
-      display:flex;
-      gap:6px;
-      align-items:center;
-      overflow-x:auto;
-      padding-bottom:2px;
-      flex: 1 1 auto;
-      scrollbar-width: none;
+      display:flex; gap:6px; align-items:center;
+      overflow-x:auto; padding-bottom:2px;
+      flex: 1 1 auto; scrollbar-width: none;
       -webkit-overflow-scrolling: touch;
       scroll-snap-type: x mandatory;
     }
@@ -164,7 +133,6 @@
       cursor:pointer;
       scroll-snap-align: start;
     }
-    .chip:hover{ border-color: color-mix(in oklab, var(--accent), var(--line) 60%); color: var(--fg); }
     .chip.active{
       color: var(--fg);
       border-color: color-mix(in oklab, var(--accent), var(--line) 35%);
@@ -178,16 +146,13 @@
       white-space: nowrap;
     }
     .titleRow{
-      display:flex;
-      gap:10px;
-      align-items:center;
+      display:flex; gap:10px; align-items:center;
       justify-content:space-between;
       margin-bottom:10px;
       flex-wrap:wrap;
     }
     .titleInput{
-      flex: 1 1 260px;
-      min-width: 260px;
+      flex: 1 1 260px; min-width: 260px;
       font-family: var(--mono);
       font-size: 12px;
       padding: 6px 8px;
@@ -197,105 +162,58 @@
       color: var(--fg);
       outline:none;
     }
-    .titleInput:focus{ border-color: color-mix(in oklab, var(--accent), var(--line) 30%); }
-    .meta{
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--muted);
-      white-space: nowrap;
-    }
+    .meta{ font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
 
     /* --- Editor text color override --- */
-    #editor {
-      color: #0000FF;
-      caret-color: #0000FF;
-    }
+    #editor { color:#0000FF; caret-color:#0000FF; }
 
     /* --- App layout with collapsible sidebar --- */
-    .app{
-      display:flex;
-      min-height:100vh;
-      align-items:stretch;
-    }
+    .app{ display:flex; min-height:100vh; align-items:stretch; }
 
     /* Backdrop overlay (mobile sidebar) */
     .backdrop{
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background: rgba(0,0,0,0.45);
       z-index: 9997;
       opacity: 0;
       pointer-events: none;
       transition: opacity .15s ease;
     }
-    .app.sidebar-open .backdrop{
-      opacity: 1;
-      pointer-events: auto;
-    }
+    .app.sidebar-open .backdrop{ opacity: 1; pointer-events: auto; }
 
     /* Sidebar */
     .sidebar{
-      width:280px;
-      max-width:280px;
+      width:280px; max-width:280px;
       border-right:1px solid var(--line);
       background: color-mix(in oklab, var(--card), transparent 10%);
-      position:sticky;
-      top:0;
-      height:100vh;
-      overflow:hidden;
-      display:flex;
-      flex-direction:column;
+      position:sticky; top:0; height:100vh;
+      overflow:hidden; display:flex; flex-direction:column;
     }
+    .content{ flex:1 1 auto; min-width:0; overflow-x:hidden; }
 
-    .content{
-      flex:1 1 auto;
-      min-width:0;
-      overflow-x:hidden;
-    }
-
-    /* Sidebar inner UI */
     .sideTop{
       padding:12px 10px;
       border-bottom:1px solid var(--line);
-      display:flex;
-      flex-direction:column;
-      gap:8px;
+      display:flex; flex-direction:column; gap:8px;
     }
     .sideTitle{
-      font-weight:800;
-      font-size:12px;
-      color:var(--muted);
-      text-transform:uppercase;
-      letter-spacing:.6px;
+      font-weight:800; font-size:12px; color:var(--muted);
+      text-transform:uppercase; letter-spacing:.6px;
     }
     .sideFilter{
       border:1px solid var(--line);
-      background:transparent;
-      color:var(--fg);
+      background:transparent; color:var(--fg);
       border-radius:10px;
       padding:6px 8px;
       font-size:12px;
       font-family:var(--mono);
       outline:none;
     }
-    .sideFilter:focus{
-      border-color:color-mix(in oklab, var(--accent), var(--line) 30%);
-    }
-    .sideList{
-      padding:10px;
-      overflow:auto;
-      -webkit-overflow-scrolling: touch;
-    }
+    .sideList{ padding:10px; overflow:auto; -webkit-overflow-scrolling: touch; }
 
-    /* Day groups */
-    .dayGroup{
-      margin-bottom:10px;
-    }
+    .dayGroup{ margin-bottom:10px; }
     .dayHeader{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:8px;
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
       padding:10px 8px;
       border:1px solid var(--line);
       border-radius:12px;
@@ -305,15 +223,7 @@
       font-size:12px;
       color:var(--fg);
     }
-    .dayHeader:hover{
-      border-color:color-mix(in oklab, var(--accent), var(--line) 60%);
-    }
-    .dayHeader .small{
-      color:var(--muted);
-      font-size:11px;
-    }
-
-    /* Entries under a day */
+    .dayHeader .small{ color:var(--muted); font-size:11px; }
     .entryItem{
       margin:6px 2px 0 10px;
       padding:10px 8px;
@@ -324,13 +234,7 @@
       font-family:var(--mono);
       font-size:12px;
       color:var(--muted);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    .entryItem:hover{
-      color:var(--fg);
-      border-color:color-mix(in oklab, var(--accent), var(--line) 60%);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
     .entryItem.active{
       color:var(--fg);
@@ -339,43 +243,24 @@
     }
 
     /* Collapsed sidebar (desktop) */
-    .app.sidebar-collapsed .sidebar{
-      width:0;
-      max-width:0;
-      border-right:none;
-    }
+    .app.sidebar-collapsed .sidebar{ width:0; max-width:0; border-right:none; }
     .app.sidebar-collapsed .sideList,
-    .app.sidebar-collapsed .sideTop{
-      display:none;
-    }
+    .app.sidebar-collapsed .sideTop{ display:none; }
 
     /* Mobile drawer behavior */
     @media (max-width: 860px){
       .sidebar{
-        position:fixed;
-        left:0;
-        top:0;
-        z-index:9998;
+        position:fixed; left:0; top:0; z-index:9998;
         transform: translateX(0);
-        width:280px;
-        max-width:85vw;
+        width:280px; max-width:85vw;
         box-shadow: 12px 0 30px rgba(0,0,0,0.35);
       }
-      .app.sidebar-collapsed .sidebar{
-        transform: translateX(-100%);
-        border-right:1px solid var(--line);
-      }
-      body.sidebar-lock{
-        overflow:hidden;
-        height:100%;
-      }
+      .app.sidebar-collapsed .sidebar{ transform: translateX(-100%); border-right:1px solid var(--line); }
+      body.sidebar-lock{ overflow:hidden; height:100%; }
+      main{ padding-bottom: 96px; } /* room for FAB */
     }
 
-    /* =========================
-       Mobile responsiveness + bigger fonts + FAB
-       ========================= */
-
-    /* Floating +Entry button (mobile) */
+    /* Floating + Entry button (mobile/tablet) */
     .fab{
       position: fixed;
       right: calc(16px + env(safe-area-inset-right));
@@ -391,65 +276,93 @@
       box-shadow: 0 12px 24px rgba(0,0,0,0.35);
       display: none;
     }
-    .fab:active{ transform: translateY(1px); }
-    .app.sidebar-open .fab{ display:none; }
-
     @media (max-width: 860px){
-      .fab{ display: inline-flex; align-items:center; gap:8px; }
-      main{ padding-bottom: 96px; }
+      .fab{ display:inline-flex; align-items:center; gap:8px; }
+      .app.sidebar-open .fab{ display:none; }
     }
 
-    /* === Toolbar SVG icon-only on MOBILE ONLY (<= 520px) === */
-    .tbtnIcon { display:none; } /* default: hide icons on desktop */
-    .tbtnText { display:inline; } /* default: show text on desktop */
+    /* ========= Mobile toolbar compression (<=520px) ========= */
+    .mobileOnly{ display:none; }
+    .desktopOnly{ display:inline-flex; }
 
-    .tbtnIcon svg{
-      width: 18px;
-      height: 18px;
-      display:block;
+    /* Search overlay under header (shown on mobile only; toggled by JS) */
+    .searchOverlay{
+      display:none;
+      position: sticky;
+      top: 0; /* set by JS to header height */
+      z-index: 9;
+      padding: 8px 0 0;
+      background: linear-gradient(var(--bg) 85%, transparent);
+      backdrop-filter: blur(6px);
     }
+    .searchOverlayInner{ display:flex; gap:8px; align-items:center; }
+    .searchOverlay input{
+      flex: 1 1 auto;
+      min-width: 0;
+      font-size: 16px; /* iOS zoom fix */
+      padding: 10px 10px;
+      border-radius: 12px;
+    }
+
+    /* Mobile more menu */
+    .menuWrap{ position: relative; display:inline-flex; }
+    .menu{
+      position:absolute;
+      right:0;
+      top: calc(100% + 8px);
+      min-width: 200px;
+      border:1px solid var(--line);
+      background: var(--card);
+      border-radius: 14px;
+      padding: 8px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+      display:none;
+      z-index: 9999;
+    }
+    .menu.open{ display:block; }
+    .menu button{
+      width: 100%;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      justify-content:flex-start;
+      padding:10px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+    }
+    .menu svg{ width:18px; height:18px; flex: 0 0 auto; }
 
     @media (max-width: 520px){
-      /* hide button labels only on mobile */
-      .tbtnText{ display:none; }
-      .tbtnIcon{ display:inline-flex; align-items:center; justify-content:center; gap:6px; }
-
-      /* make export/import buttons super compact on mobile */
-      #export, #exportTxt, #import, #importTxt{
-        padding: 10px 10px;
-        min-width: 44px;
-        text-align: center;
+      /* prevent header wrap: ONE ROW */
+      .bar{
+        width:100%;
+        flex-wrap: nowrap;
+        justify-content:flex-start;
+        overflow:hidden;
+        gap:6px;
       }
+      /* hide desktop search + desktop export/import on mobile */
+      #q.desktopOnly{ display:none !important; }
+      #export.desktopOnly, #exportTxt.desktopOnly, #import.desktopOnly, #importTxt.desktopOnly{ display:none !important; }
 
-      /* keep search on full row as before */
-      header{ gap:8px; padding:10px 0; }
-      .left{ width:100%; justify-content:space-between; align-items:center; }
-      h1{ font-size:16px; }
-      .date{ font-size:11px; }
-      .bar{ width:100%; justify-content:flex-start; gap:6px; }
-      #q{ flex: 1 1 100%; min-width: 100%; }
+      /* show mobile icons (search + menu) */
+      .mobileOnly{ display:inline-flex; }
+      .desktopOnly{ display:none; }
 
-      /* prevent iOS zoom */
-      #q, .titleInput{ font-size:16px; }
-
-      textarea{
-        font-size:16px;
-        line-height:1.45;
-        min-height: 54vh;
-      }
-
-      .card{ padding:10px; border-radius:16px; }
-      .titleInput{ min-width:100%; }
+      /* bigger typing fonts */
+      textarea{ font-size:16px; line-height:1.45; min-height:54vh; }
+      .titleInput{ min-width:100%; font-size:16px; } /* iOS zoom fix */
       .meta{ width:100%; text-align:left; font-size:11px; }
+      .card{ padding:10px; border-radius:16px; }
 
-      .bar button{ padding: 10px 10px; border-radius: 12px; }
-      .bar .iconBtn{ padding: 10px 10px; min-width: 40px; }
+      /* touch-friendly buttons */
+      .bar button{ padding:10px 10px; border-radius:12px; }
+      .bar .iconBtn{ padding:10px 10px; min-width:40px; }
     }
   </style>
 </head>
 
 <body>
-
 <div class="app">
   <div id="backdrop" class="backdrop" hidden></div>
 
@@ -475,73 +388,72 @@
           <button id="next" title="Next day (Alt+Right)">→</button>
           <button class="primary" id="today" title="Jump to today (T)">Today</button>
 
-          <input id="q" placeholder="Search…" title="Search entries (Ctrl/Cmd+/)" />
+          <!-- Desktop search (hidden on mobile) -->
+          <input id="q" class="desktopOnly" placeholder="Search…" title="Search entries (Ctrl/Cmd+/)" />
+
+          <!-- Mobile search icon (shown only on mobile <=520px) -->
+          <button id="searchBtn" class="iconBtn mobileOnly" title="Search">🔍</button>
+
           <button id="helpBtn" class="iconBtn" title="Help (H)">?</button>
 
-          <!-- Export JSON -->
-          <button id="export" title="Export JSON">
-            <span class="tbtnIcon" aria-hidden="true">
-              <!-- download icon -->
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                   stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 3v10"></path>
-                <path d="M7 10l5 5 5-5"></path>
-                <path d="M5 21h14"></path>
-              </svg>
-            </span>
-            <span class="tbtnText">Export</span>
-          </button>
+          <!-- Desktop export/import buttons (unchanged; hidden on mobile) -->
+          <button id="export" class="desktopOnly" title="Export JSON">Export</button>
+          <button id="exportTxt" class="desktopOnly" title="Export TXT">Export TXT</button>
+          <button id="import" class="desktopOnly" title="Import JSON">Import</button>
+          <button id="importTxt" class="desktopOnly" title="Import TXT">Import TXT</button>
 
-          <!-- Export TXT -->
-          <button id="exportTxt" title="Export TXT">
-            <span class="tbtnIcon" aria-hidden="true">
-              <!-- file text + download -->
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                   stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"></path>
-                <path d="M14 2v5h5"></path>
-                <path d="M8 13h8"></path>
-                <path d="M8 17h6"></path>
-                <path d="M12 11v6"></path>
-                <path d="M9.5 14.5L12 17l2.5-2.5"></path>
-              </svg>
-            </span>
-            <span class="tbtnText">Export TXT</span>
-          </button>
-
-          <!-- Import JSON -->
-          <button id="import" title="Import JSON">
-            <span class="tbtnIcon" aria-hidden="true">
-              <!-- upload icon -->
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                   stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 21V11"></path>
-                <path d="M7 14l5-5 5 5"></path>
-                <path d="M5 3h14"></path>
-              </svg>
-            </span>
-            <span class="tbtnText">Import</span>
-          </button>
-
-          <!-- Import TXT -->
-          <button id="importTxt" title="Import TXT">
-            <span class="tbtnIcon" aria-hidden="true">
-              <!-- file text + upload -->
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                   stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"></path>
-                <path d="M14 2v5h5"></path>
-                <path d="M8 13h8"></path>
-                <path d="M8 17h6"></path>
-                <path d="M12 19V13"></path>
-                <path d="M9.5 15.5L12 13l2.5 2.5"></path>
-              </svg>
-            </span>
-            <span class="tbtnText">Import TXT</span>
-          </button>
+          <!-- Mobile More menu (shown only on mobile) -->
+          <div class="menuWrap mobileOnly">
+            <button id="moreBtn" class="iconBtn" title="More">⋮</button>
+            <div id="moreMenu" class="menu" role="menu" aria-label="More actions">
+              <button id="mExport" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 3v10"></path><path d="M7 10l5 5 5-5"></path><path d="M5 21h14"></path>
+                </svg>
+                Export JSON
+              </button>
+              <button id="mExportTxt" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"></path>
+                  <path d="M14 2v5h5"></path>
+                  <path d="M8 13h8"></path><path d="M8 17h6"></path>
+                  <path d="M12 11v6"></path><path d="M9.5 14.5L12 17l2.5-2.5"></path>
+                </svg>
+                Export TXT
+              </button>
+              <button id="mImport" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 21V11"></path><path d="M7 14l5-5 5 5"></path><path d="M5 3h14"></path>
+                </svg>
+                Import JSON
+              </button>
+              <button id="mImportTxt" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"></path>
+                  <path d="M14 2v5h5"></path>
+                  <path d="M8 13h8"></path><path d="M8 17h6"></path>
+                  <path d="M12 19V13"></path><path d="M9.5 15.5L12 13l2.5 2.5"></path>
+                </svg>
+                Import TXT
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
+      <!-- Mobile search overlay (only shown on mobile by JS) -->
+      <div id="searchOverlay" class="searchOverlay">
+        <div class="searchOverlayInner">
+          <input id="qMobile" placeholder="Search…" />
+          <button id="searchClose" class="iconBtn" title="Close search">✕</button>
+        </div>
+      </div>
+
+      <!-- Help popover -->
       <div id="helpPopover" class="helpPopover" hidden>
         <div class="helpTitle">Quick help</div>
         <div class="helpBody">Rapid log: • task, ○ event, — note, ✓ done.
@@ -596,6 +508,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
 </div>
 
 <script>
+  // ====== Tiny BuJo (single-file) ======
   const KEY = "bujo.v2.multi";
   const $ = (id) => document.getElementById(id);
 
@@ -608,7 +521,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
 
   const todayLabel = $("todayLabel");
   const status = $("status");
-  const q = $("q");
+  const qDesktop = $("q");
   const results = $("results");
   const count = $("count");
 
@@ -618,6 +531,20 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
   const sideFilter = $("sideFilter");
   const backdrop = $("backdrop");
   const UI_KEY = "bujo.ui.sidebarCollapsed";
+
+  // Mobile search overlay
+  const searchBtn = $("searchBtn");
+  const searchOverlay = $("searchOverlay");
+  const qMobile = $("qMobile");
+  const searchClose = $("searchClose");
+
+  // Mobile more menu
+  const moreBtn = $("moreBtn");
+  const moreMenu = $("moreMenu");
+  const mExport = $("mExport");
+  const mExportTxt = $("mExportTxt");
+  const mImport = $("mImport");
+  const mImportTxt = $("mImportTxt");
 
   const pad = (n) => String(n).padStart(2, "0");
   const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -687,6 +614,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
 
   const sortEntries = (arr) => arr.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
 
+  // ---- Sidebar helpers (mobile drawer + desktop collapse) ----
   function setSidebarCollapsed(collapsed) {
     if (!appEl) return;
 
@@ -716,14 +644,13 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
   const getDaysSortedDesc = () =>
     Object.keys(db)
       .filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k))
-      .sort((a, b) => (a < b ? 1 : -1));
+      .sort((a, b) => (a < b ? 1 : -1)); // newest first
 
   function renderSidebarIndex() {
     if (!sideList) return;
 
     const term = (sideFilter?.value || "").trim().toLowerCase();
     const days = getDaysSortedDesc();
-
     sideList.innerHTML = "";
 
     for (const day of days) {
@@ -751,7 +678,6 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
       for (const e of sorted) {
         const item = document.createElement("div");
         item.className = "entryItem";
-
         if (day === current && e.id === currentEntryId) item.classList.add("active");
 
         const title = (e.title || "").trim() || "Untitled";
@@ -763,7 +689,6 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
           setTimeout(() => openEntry(e.id), 0);
           if (window.matchMedia("(max-width: 860px)").matches) setSidebarCollapsed(true);
         };
-
         group.appendChild(item);
       }
 
@@ -771,6 +696,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     }
   }
 
+  // ---- Entry chips above editor ----
   const renderEntryList = () => {
     const arr = sortEntries(ensureEntriesArray(current));
     entryList.innerHTML = "";
@@ -871,10 +797,23 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     renderSidebarIndex();
   };
 
+  // ---- Search across ALL entries ----
   const escapeHtml = (s) => (s || "").replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 
+  function isMobile520(){ return window.matchMedia("(max-width: 520px)").matches; }
+
+  function getSearchTerm(){
+    const t1 = (qDesktop?.value || "").trim();
+    const t2 = (qMobile?.value || "").trim();
+    return (t1 || t2);
+  }
+  function setSearchTerm(v){
+    if (qDesktop) qDesktop.value = v;
+    if (qMobile) qMobile.value = v;
+  }
+
   const renderSearch = () => {
-    const term = q.value.trim().toLowerCase();
+    const term = getSearchTerm().toLowerCase();
     if (!term) {
       results.textContent = "Use Ctrl/Cmd + / to search.";
       count.textContent = "";
@@ -913,6 +852,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
       : "No matches.";
   };
 
+  // -------- Download helper --------
   const download = (name, text, type = "text/plain") => {
     const blob = new Blob([text], { type });
     const a = document.createElement("a");
@@ -922,10 +862,12 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     URL.revokeObjectURL(a.href);
   };
 
-  $("export").onclick = () =>
+  // -------- Export/Import actions (used by desktop buttons + mobile menu) --------
+  function doExportJSON(){
     download(`bujo-${ymd(new Date())}.json`, JSON.stringify(db, null, 2), "application/json");
+  }
 
-  $("import").onclick = async () => {
+  function doImportJSON(){
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "application/json";
@@ -949,8 +891,9 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
       }
     };
     input.click();
-  };
+  }
 
+  // TXT V2 Export/Import (with V1 fallback)
   const toBujoTxtV2 = (db) => {
     const now = new Date().toISOString();
     const days = Object.keys(db)
@@ -1009,11 +952,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
       for (; i < lines.length; i++) {
         const line = lines[i];
         const m = line.match(/^@@\s+(\d{4}-\d{2}-\d{2})\s*$/);
-        if (m) {
-          flush();
-          currentDay = m[1];
-          continue;
-        }
+        if (m) { flush(); currentDay = m[1]; continue; }
         if (!currentDay) continue;
         buf.push(line);
       }
@@ -1043,11 +982,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
       const line = lines[i];
 
       const mDay = line.match(/^@@\s+(\d{4}-\d{2}-\d{2})\s*$/);
-      if (mDay) {
-        flushEntry();
-        day = mDay[1];
-        continue;
-      }
+      if (mDay) { flushEntry(); day = mDay[1]; continue; }
 
       const mEntry = line.match(/^@\s+(\d{2}:\d{2})\s*\|\s*(.*)$/);
       if (mEntry) {
@@ -1055,13 +990,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
         const [hh, mm] = mEntry[1].split(":").map(Number);
         const base = parseYMD(day || ymd(new Date()));
         base.setHours(hh || 0, mm || 0, 0, 0);
-
-        entry = {
-          id: uid(),
-          ts: base.getTime(),
-          title: (mEntry[2] || "").trim(),
-          text: ""
-        };
+        entry = { id: uid(), ts: base.getTime(), title: (mEntry[2] || "").trim(), text: "" };
         continue;
       }
 
@@ -1070,18 +999,16 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     }
     flushEntry();
 
-    for (const d of Object.keys(result)) {
-      result[d] = sortEntries(result[d]);
-    }
+    for (const d of Object.keys(result)) result[d] = sortEntries(result[d]);
     return result;
   };
 
-  $("exportTxt").onclick = () => {
+  function doExportTXT(){
     const txt = toBujoTxtV2(db);
     download(`bujo-${ymd(new Date())}.txt`, txt, "text/plain");
-  };
+  }
 
-  $("importTxt").onclick = async () => {
+  function doImportTXT(){
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".txt,text/plain";
@@ -1108,10 +1035,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
             `Import TXT will OVERWRITE ${conflicts.length} existing day(s):\n` +
             `${preview}${more}\n\nContinue?`
           );
-          if (!ok) {
-            setStatus("TXT import cancelled", true);
-            return;
-          }
+          if (!ok) { setStatus("TXT import cancelled", true); return; }
         }
 
         for (const day of incomingDays) {
@@ -1132,40 +1056,77 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
       }
     };
     input.click();
-  };
+  }
 
-  q.addEventListener("input", renderSearch);
-  editor.addEventListener("input", () => setStatus("Not saved"));
-  entryTitle.addEventListener("input", () => setStatus("Not saved"));
+  // Wire desktop buttons (unchanged IDs)
+  $("export").onclick = doExportJSON;
+  $("exportTxt").onclick = doExportTXT;
+  $("import").onclick = doImportJSON;
+  $("importTxt").onclick = doImportTXT;
 
-  newEntryBtn.onclick = () => newEntry("");
-  if (fabNewEntryBtn) fabNewEntryBtn.onclick = () => newEntry("");
+  // Mobile menu helpers
+  function closeMoreMenu(){ if (moreMenu) moreMenu.classList.remove("open"); }
+  function toggleMoreMenu(){ if (!moreMenu) return; moreMenu.classList.toggle("open"); }
 
-  const maybeSave = (e) => {
-    const isSave = (e.ctrlKey || e.metaKey) && e.key === "Enter";
-    if (isSave) {
-      e.preventDefault();
-      saveEntry();
-      return true;
-    }
-    return false;
-  };
+  // Wire mobile menu actions
+  if (mExport) mExport.onclick = () => { closeMoreMenu(); doExportJSON(); };
+  if (mExportTxt) mExportTxt.onclick = () => { closeMoreMenu(); doExportTXT(); };
+  if (mImport) mImport.onclick = () => { closeMoreMenu(); doImportJSON(); };
+  if (mImportTxt) mImportTxt.onclick = () => { closeMoreMenu(); doImportTXT(); };
 
-  editor.addEventListener("keydown", (e) => {
-    if (maybeSave(e)) return;
-    bujoFastEntry(e);
+  // ---- Mobile Search overlay logic ----
+  function positionSearchOverlay(){
+    if (!searchOverlay) return;
+    const headerEl = document.querySelector("header");
+    if (!headerEl) return;
+    const rect = headerEl.getBoundingClientRect();
+    searchOverlay.style.top = rect.height + "px";
+  }
+
+  function openMobileSearch(){
+    if (!isMobile520()) return;
+    closeMoreMenu();
+    positionSearchOverlay();
+    searchOverlay.style.display = "block";
+    if (qMobile) qMobile.value = getSearchTerm();
+    setTimeout(() => qMobile && qMobile.focus(), 0);
+  }
+  function closeMobileSearch(){
+    if (searchOverlay) searchOverlay.style.display = "none";
+  }
+
+  if (searchBtn) searchBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (!searchOverlay) return;
+    if (searchOverlay.style.display === "block") closeMobileSearch();
+    else openMobileSearch();
   });
-  entryTitle.addEventListener("keydown", (e) => {
-    if (maybeSave(e)) return;
+
+  if (searchClose) searchClose.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeMobileSearch();
+    editor.focus();
   });
 
-  $("today").onclick = () => openDay(ymd(new Date()));
-  $("prev").onclick = () => openDay(addDays(current, -1));
-  $("next").onclick = () => openDay(addDays(current, 1));
+  // Sync search inputs
+  if (qDesktop) qDesktop.addEventListener("input", () => { setSearchTerm(qDesktop.value); renderSearch(); });
+  if (qMobile) qMobile.addEventListener("input", () => { setSearchTerm(qMobile.value); renderSearch(); });
 
+  // More menu button
+  if (moreBtn) moreBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeMobileSearch();
+    toggleMoreMenu();
+  });
+
+  // Close menus on outside click (don’t close help here)
+  document.addEventListener("click", () => {
+    closeMoreMenu();
+  });
+
+  // ---- BuJo fast-entry ----
   const BULLET = { n: "—", t: "•", e: "○" };
   const SIGS = new Set(["!", "*", "?", "@"]);
-
   const lineStartIndex = (text, pos) => text.lastIndexOf("\n", pos - 1) + 1;
   const currentLine = (text, pos) => {
     const start = lineStartIndex(text, pos);
@@ -1188,12 +1149,8 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
       let sign = " ";
       let key = null;
 
-      if (prefix.length === 1 && BULLET[prefix]) {
-        key = prefix;
-      } else if (prefix.length === 2 && SIGS.has(prefix[0]) && BULLET[prefix[1]]) {
-        sign = prefix[0];
-        key = prefix[1];
-      }
+      if (prefix.length === 1 && BULLET[prefix]) key = prefix;
+      else if (prefix.length === 2 && SIGS.has(prefix[0]) && BULLET[prefix[1]]) { sign = prefix[0]; key = prefix[1]; }
 
       if (key) {
         e.preventDefault();
@@ -1202,7 +1159,6 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
         editor.value = next;
         const caret = ls + replacement.length;
         editor.setSelectionRange(caret, caret);
-        return;
       }
     }
 
@@ -1222,6 +1178,28 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     }
   }
 
+  // ---- Save logic ----
+  const maybeSave = (e) => {
+    const isSave = (e.ctrlKey || e.metaKey) && e.key === "Enter";
+    if (isSave) { e.preventDefault(); saveEntry(); return true; }
+    return false;
+  };
+
+  editor.addEventListener("keydown", (e) => { if (maybeSave(e)) return; bujoFastEntry(e); });
+  entryTitle.addEventListener("keydown", (e) => { if (maybeSave(e)) return; });
+
+  // UI hooks
+  editor.addEventListener("input", () => setStatus("Not saved"));
+  entryTitle.addEventListener("input", () => setStatus("Not saved"));
+
+  newEntryBtn.onclick = () => newEntry("");
+  if (fabNewEntryBtn) fabNewEntryBtn.onclick = () => newEntry("");
+
+  $("today").onclick = () => openDay(ymd(new Date()));
+  $("prev").onclick = () => openDay(addDays(current, -1));
+  $("next").onclick = () => openDay(addDays(current, 1));
+
+  // Sidebar events
   if (sideToggle) sideToggle.addEventListener("click", toggleSidebar);
   if (sideFilter) sideFilter.addEventListener("input", renderSidebarIndex);
   if (backdrop) backdrop.addEventListener("click", () => setSidebarCollapsed(true));
@@ -1230,16 +1208,48 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     if (!appEl) return;
     const collapsed = appEl.classList.contains("sidebar-collapsed");
     setSidebarCollapsed(collapsed);
+    positionSearchOverlay();
   });
 
   if (appEl) setSidebarCollapsed(localStorage.getItem(UI_KEY) === "1");
 
+  // ---- Help popover ----
+  const helpBtn = $("helpBtn");
+  const helpPopover = $("helpPopover");
+
+  function closeHelp(){ if (helpPopover) helpPopover.hidden = true; }
+  function openHelp(){
+    closeMoreMenu();
+    closeMobileSearch();
+    const r = helpBtn.getBoundingClientRect();
+    const pad = 8;
+    helpPopover.hidden = false;
+    const popW = helpPopover.offsetWidth;
+    const popH = helpPopover.offsetHeight;
+    const left = Math.max(pad, Math.min(r.left, window.innerWidth - popW - pad));
+    const top = Math.min(window.innerHeight - popH - pad, r.bottom + 8);
+    helpPopover.style.left = left + "px";
+    helpPopover.style.top = top + "px";
+  }
+  function toggleHelp(){ if (helpPopover.hidden) openHelp(); else closeHelp(); }
+
+  helpBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleHelp(); });
+  helpPopover.addEventListener("click", (e) => e.stopPropagation());
+
+  // ---- Global shortcuts ----
   document.addEventListener("keydown", (e) => {
     const isSearch = (e.ctrlKey || e.metaKey) && e.key === "/";
-    if (isSearch) { e.preventDefault(); q.focus(); return; }
+    if (isSearch) {
+      e.preventDefault();
+      if (isMobile520()) openMobileSearch();
+      else qDesktop.focus();
+      return;
+    }
 
     const isSide = (e.ctrlKey || e.metaKey) && (e.key === "b" || e.key === "B");
     if (isSide) { e.preventDefault(); toggleSidebar(); return; }
+
+    if (e.key === "Escape") { closeMobileSearch(); closeMoreMenu(); closeHelp(); return; }
 
     if ((e.key === "h" || e.key === "H") &&
         !(e.target && (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT"))) {
@@ -1253,31 +1263,8 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     if (e.altKey && e.key === "ArrowRight") openDay(addDays(current, 1));
   });
 
-  const helpBtn = $("helpBtn");
-  const helpPopover = $("helpPopover");
-
-  const closeHelp = () => { helpPopover.hidden = true; };
-  const openHelp = () => {
-    const r = helpBtn.getBoundingClientRect();
-    const pad = 8;
-    helpPopover.hidden = false;
-    const popW = helpPopover.offsetWidth;
-    const popH = helpPopover.offsetHeight;
-    const left = Math.max(pad, Math.min(r.left, window.innerWidth - popW - pad));
-    const top = Math.min(window.innerHeight - popH - pad, r.bottom + 8);
-    helpPopover.style.left = left + "px";
-    helpPopover.style.top = top + "px";
-  };
-  const toggleHelp = () => { if (helpPopover.hidden) openHelp(); else closeHelp(); };
-
-  helpBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleHelp(); });
-  helpPopover.addEventListener("click", (e) => e.stopPropagation());
-  document.addEventListener("click", () => { if (!helpPopover.hidden) closeHelp(); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeHelp(); });
-  window.addEventListener("resize", () => { if (!helpPopover.hidden) openHelp(); });
-  window.addEventListener("scroll", () => { if (!helpPopover.hidden) openHelp(); }, true);
-
   // Init
+  positionSearchOverlay();
   openDay(current);
   renderEntryList();
   renderSidebarIndex();
