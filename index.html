@@ -371,6 +371,55 @@
       .bar button{ padding:10px 10px; border-radius:12px; }
       .bar .iconBtn{ padding:10px 10px; min-width:40px; }
     }
+	
+	/* ===== FIX: keep mobile ⋮ menu visible (<=520px) ===== */
+@media (max-width: 520px){
+
+  /* Stop the toolbar being horizontally scrollable */
+  .bar{
+    overflow-x: hidden !important;
+    overflow-y: hidden !important;
+  }
+
+  /* Pin the mobile menu to the far right */
+  .menuWrap.mobileOnly{
+    margin-left: auto !important;
+    flex: 0 0 auto;
+  }
+
+  /* Also pin search + help so they don’t get pushed off-screen */
+  #searchBtn.mobileOnly,
+  #helpBtn{
+    flex: 0 0 auto;
+  }
+
+  /* Prevent any button from shrinking to zero */
+  .bar > *{
+    flex-shrink: 0;
+  }
+}
+  
+  /* ===== FINAL FIX: pin ⋮ menu to the right on mobile (<=520px) ===== */
+@media (max-width: 520px){
+  .bar{
+    position: relative;
+    padding-right: 48px; /* reserve space for pinned ⋮ button */
+    overflow: hidden !important; /* keep header height compact */
+  }
+
+  /* Pin the ⋮ container */
+  .menuWrap.mobileOnly{
+    position: absolute !important;
+    right: 0;
+    top: 0;
+    margin-left: 0 !important;
+  }
+
+  /* Ensure pinned button is always clickable */
+  #moreBtn{
+    pointer-events: auto;
+  }
+}
   </style>
 </head>
 
