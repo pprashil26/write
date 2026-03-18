@@ -683,8 +683,10 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
 
   const sortEntries = (arr) => arr.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
   
-  const safePosOverlay = () => {
-  if (typeof positionSearchOverlay === "function") safePosOverlay();
+const safePosOverlay = () => {
+  if (typeof positionSearchOverlay === "function") {
+    positionSearchOverlay();
+  }
 };
 
   // ---- Sidebar helpers (mobile drawer + desktop collapse) ----
