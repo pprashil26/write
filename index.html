@@ -404,7 +404,7 @@
   .bar{
     position: relative;
     padding-right: 48px; /* reserve space for pinned ⋮ button */
-    overflow: hidden !important; /* keep header height compact */
+    overflow: visible !important;
   }
 
   /* Pin the ⋮ container */
@@ -418,6 +418,14 @@
   /* Ensure pinned button is always clickable */
   #moreBtn{
     pointer-events: auto;
+  }
+}
+
+/* ===== FORCE mobile toolbar final behavior (last-wins) ===== */
+@media (max-width: 520px){
+  .bar{
+    flex-wrap: nowrap !important;
+    overflow: visible !important;
   }
 }
   </style>
@@ -674,6 +682,10 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
   };
 
   const sortEntries = (arr) => arr.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
+  
+  const safePosOverlay = () => {
+  if (typeof positionSearchOverlay === "function") safePosOverlay();
+};
 
   // ---- Sidebar helpers (mobile drawer + desktop collapse) ----
   function setSidebarCollapsed(collapsed) {
@@ -1147,7 +1159,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
   function openMobileSearch(){
     if (!isMobile520()) return;
     closeMoreMenu();
-    positionSearchOverlay();
+    safePosOverlay();
     searchOverlay.style.display = "block";
     if (qMobile) qMobile.value = getSearchTerm();
     setTimeout(() => qMobile && qMobile.focus(), 0);
@@ -1269,7 +1281,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
     if (!appEl) return;
     const collapsed = appEl.classList.contains("sidebar-collapsed");
     setSidebarCollapsed(collapsed);
-    positionSearchOverlay();
+    safePosOverlay();
   });
 
   if (appEl) setSidebarCollapsed(localStorage.getItem(UI_KEY) === "1");
@@ -1325,7 +1337,7 @@ End markers: ✓ done, ✗ cancelled, >> migrated"></textarea>
   });
 
   // Init
-  positionSearchOverlay();
+  safePosOverlay();
   openDay(current);
   renderEntryList();
   renderSidebarIndex();
